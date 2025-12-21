@@ -56,6 +56,11 @@
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.DeviceDefault.NoActionBar" />
 
+        <!-- 確認画面 -->
+        <activity
+            android:name="androidx.wear.activity.ConfirmationActivity"
+            android:exported="false" />
+
     </application>
 
 </manifest>

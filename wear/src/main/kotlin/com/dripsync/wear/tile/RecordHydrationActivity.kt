@@ -1,9 +1,10 @@
 package com.dripsync.wear.tile
 
+import android.content.Intent
 import android.os.Bundle
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
+import androidx.wear.activity.ConfirmationActivity
 import androidx.wear.tiles.TileService
 import com.dripsync.shared.data.model.SourceDevice
 import com.dripsync.shared.data.repository.HydrationRepository
@@ -37,23 +38,28 @@ class RecordHydrationActivity : ComponentActivity() {
                     TileService.getUpdater(this@RecordHydrationActivity)
                         .requestUpdate(HydrationTileService::class.java)
 
-                    Toast.makeText(
-                        this@RecordHydrationActivity,
-                        "${amountMl}ml を記録しました",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    showConfirmation(
+                        ConfirmationActivity.SUCCESS_ANIMATION,
+                        "+${amountMl}ml"
+                    )
                 } catch (e: Exception) {
-                    Toast.makeText(
-                        this@RecordHydrationActivity,
-                        "記録に失敗しました",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } finally {
-                    finish()
+                    showConfirmation(
+                        ConfirmationActivity.FAILURE_ANIMATION,
+                        "記録失敗"
+                    )
                 }
             }
         } else {
             finish()
         }
+    }
+
+    private fun showConfirmation(animationType: Int, message: String) {
+        val intent = Intent(this, ConfirmationActivity::class.java).apply {
+            putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, animationType)
+            putExtra(ConfirmationActivity.EXTRA_MESSAGE, message)
+        }
+        startActivity(intent)
+        finish()
     }
 }
