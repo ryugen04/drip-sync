@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">DripSync</string>
+    <string name="tile_name">水分記録</string>
+    <string name="tile_description">今日の水分摂取量を記録</string>
+</resources>

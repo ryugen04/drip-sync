@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="384dp"
+    android:height="384dp"
+    android:viewportWidth="384"
+    android:viewportHeight="384">
+    <!-- 背景（BackgroundDark） -->
+    <path
+        android:fillColor="#0D1520"
+        android:pathData="M0,0h384v384h-384z"/>
+    <!-- 水滴アイコン（CyanBright） -->
+    <path
+        android:fillColor="#00E5FF"
+        android:pathData="M192,80
+                          C192,80 152,140 152,180
+                          C152,202.09 170.91,220 192,220
+                          C213.09,220 232,202.09 232,180
+                          C232,140 192,80 192,80Z" />
+    <!-- プリセットボタン（左） -->
+    <path
+        android:fillColor="#1A2535"
+        android:pathData="M100,300m-32,0a32,32 0,1 1,64 0a32,32 0,1 1,-64 0"/>
+    <!-- プリセットボタン（中央） -->
+    <path
+        android:fillColor="#1A2535"
+        android:pathData="M192,300m-32,0a32,32 0,1 1,64 0a32,32 0,1 1,-64 0"/>
+    <!-- プリセットボタン（右） -->
+    <path
+        android:fillColor="#1A2535"
+        android:pathData="M284,300m-32,0a32,32 0,1 1,64 0a32,32 0,1 1,-64 0"/>
+</vector>
