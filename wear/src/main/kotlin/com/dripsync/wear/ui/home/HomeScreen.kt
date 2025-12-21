@@ -4,7 +4,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -66,8 +65,7 @@ private val RING_PADDING = 4.dp
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel = hiltViewModel(),
-    onNavigateToSettings: () -> Unit = {}
+    viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -81,7 +79,7 @@ fun HomeScreen(
                     ConfirmationOverlay.SUCCESS_ANIMATION to "+${event.amountMl}ml"
                 }
                 is RecordEvent.Failure -> {
-                    ConfirmationOverlay.FAILURE_ANIMATION to "記録失敗"
+                    ConfirmationOverlay.FAILURE_ANIMATION to "Failed"
                 }
             }
             ConfirmationOverlay()
@@ -123,11 +121,7 @@ fun HomeScreen(
         ) {
             // ロゴとタイトル（灰色・小さめ）
             Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.clickable(
-                    interactionSource = remember { MutableInteractionSource() },
-                    indication = null
-                ) { onNavigateToSettings() }
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 Image(
                     painter = painterResource(id = R.drawable.drop),
