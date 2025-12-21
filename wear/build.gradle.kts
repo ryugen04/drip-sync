@@ -113,6 +113,9 @@ dependencies {
     implementation(libs.bundles.horologist)
     implementation(libs.horologist.datalayer)
 
+    // Watchface Complications
+    implementation(libs.wear.watchface.complications)
+
     // Hilt
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)

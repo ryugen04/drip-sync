@@ -3,4 +3,5 @@
     <string name="app_name">DripSync</string>
     <string name="tile_name">水分記録</string>
     <string name="tile_description">今日の水分摂取量を記録</string>
+    <string name="complication_name">水分摂取量</string>
 </resources>

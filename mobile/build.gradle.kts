@@ -110,6 +110,9 @@ dependencies {
     // Navigation
     implementation(libs.navigation.compose)
 
+    // Calendar
+    implementation("com.kizitonwose.calendar:compose:2.5.0")
+
     // Hilt
     implementation(libs.hilt.android)
     implementation(libs.hilt.navigation.compose)

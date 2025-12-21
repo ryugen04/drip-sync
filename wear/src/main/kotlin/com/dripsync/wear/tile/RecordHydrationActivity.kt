@@ -7,6 +7,7 @@ import androidx.wear.tiles.TileService
 import androidx.wear.widget.ConfirmationOverlay
 import com.dripsync.shared.data.model.SourceDevice
 import com.dripsync.shared.data.repository.HydrationRepository
+import com.dripsync.wear.complication.HydrationComplicationService
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -36,6 +37,9 @@ class RecordHydrationActivity : ComponentActivity() {
                     // タイルを更新
                     TileService.getUpdater(this@RecordHydrationActivity)
                         .requestUpdate(HydrationTileService::class.java)
+
+                    // コンプリケーションを更新
+                    HydrationComplicationService.requestUpdate(this@RecordHydrationActivity)
 
                     showConfirmation(
                         ConfirmationOverlay.SUCCESS_ANIMATION,

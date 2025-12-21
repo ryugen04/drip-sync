@@ -47,6 +47,23 @@
                 <category android:name="android.intent.category.HEALTH_PERMISSIONS" />
             </intent-filter>
         </activity-alias>
+
+        <!-- Data Layer Listener Service for Wear OS sync -->
+        <service
+            android:name=".sync.DataLayerListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/hydration"
+                    android:scheme="wear" />
+                <data
+                    android:host="*"
+                    android:path="/preferences"
+                    android:scheme="wear" />
+            </intent-filter>
+        </service>
     </application>
 
     <!-- Health Connect が利用可能なデバイスのみをターゲット -->

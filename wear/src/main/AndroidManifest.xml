@@ -56,6 +56,41 @@
             android:excludeFromRecents="true"
             android:theme="@android:style/Theme.Translucent.NoTitleBar" />
 
+        <!-- Complication Data Source Service -->
+        <service
+            android:name=".complication.HydrationComplicationService"
+            android:exported="true"
+            android:icon="@drawable/drop"
+            android:label="@string/complication_name"
+            android:permission="com.google.android.wearable.permission.BIND_COMPLICATION_PROVIDER">
+            <intent-filter>
+                <action android:name="android.support.wearable.complications.ACTION_COMPLICATION_UPDATE_REQUEST" />
+            </intent-filter>
+            <meta-data
+                android:name="android.support.wearable.complications.SUPPORTED_TYPES"
+                android:value="SHORT_TEXT,RANGED_VALUE" />
+            <meta-data
+                android:name="android.support.wearable.complications.UPDATE_PERIOD_SECONDS"
+                android:value="300" />
+        </service>
+
+        <!-- Data Layer Listener Service for Mobile sync -->
+        <service
+            android:name=".sync.DataLayerListenerService"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/hydration"
+                    android:scheme="wear" />
+                <data
+                    android:host="*"
+                    android:path="/preferences"
+                    android:scheme="wear" />
+            </intent-filter>
+        </service>
+
     </application>
 
 </manifest>

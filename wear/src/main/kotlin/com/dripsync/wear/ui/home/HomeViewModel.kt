@@ -8,6 +8,7 @@ import com.dripsync.shared.data.model.SourceDevice
 import com.dripsync.shared.data.preferences.PresetSettings
 import com.dripsync.shared.data.preferences.UserPreferencesRepository
 import com.dripsync.shared.data.repository.HydrationRepository
+import com.dripsync.wear.complication.HydrationComplicationService
 import com.dripsync.wear.tile.HydrationTileService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -78,6 +79,8 @@ class HomeViewModel @Inject constructor(
                 // タイルを更新
                 TileService.getUpdater(application)
                     .requestUpdate(HydrationTileService::class.java)
+                // コンプリケーションを更新
+                HydrationComplicationService.requestUpdate(application)
                 _recordEvent.emit(RecordEvent.Success(amountMl))
             } catch (e: Exception) {
                 _recordEvent.emit(RecordEvent.Failure)

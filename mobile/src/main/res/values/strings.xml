@@ -1,4 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- app_name は productFlavors で設定されるため、ここでは定義しない -->
+
+    <!-- Navigation -->
+    <string name="nav_dashboard">ホーム</string>
+    <string name="nav_history">履歴</string>
+    <string name="nav_settings">設定</string>
+
+    <!-- Dashboard -->
+    <string name="dashboard_title">今日の水分摂取</string>
+    <string name="dashboard_goal_format">目標: %d ml</string>
+    <string name="dashboard_remaining_format">あと %d ml</string>
+    <string name="dashboard_goal_achieved">目標達成</string>
+
+    <!-- History -->
+    <string name="history_title">履歴</string>
+    <string name="history_delete_success">記録を削除しました</string>
+    <string name="history_delete_failed">削除に失敗しました</string>
+
+    <!-- Settings -->
+    <string name="settings_title">設定</string>
+    <string name="settings_daily_goal">1日の目標摂取量</string>
+    <string name="settings_presets">プリセット</string>
+    <string name="settings_preset_format">プリセット %d</string>
+
+    <!-- Common -->
+    <string name="record_success_format">+%d ml を記録しました</string>
+    <string name="record_failed">記録に失敗しました</string>
+    <string name="ml_format">%d ml</string>
+    <string name="liter_format">%.1f L</string>
 </resources>
