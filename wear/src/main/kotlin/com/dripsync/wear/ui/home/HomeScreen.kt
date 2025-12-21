@@ -20,10 +20,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.platform.LocalDensity
 import kotlin.math.min
 import kotlin.math.sqrt
+import android.app.Activity
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
+import androidx.wear.widget.ConfirmationOverlay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -66,6 +70,26 @@ fun HomeScreen(
     onNavigateToSettings: () -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
+
+    // 記録イベントを監視してConfirmationOverlayを表示
+    LaunchedEffect(Unit) {
+        viewModel.recordEvent.collect { event ->
+            val activity = context as? Activity ?: return@collect
+            val (type, message) = when (event) {
+                is RecordEvent.Success -> {
+                    ConfirmationOverlay.SUCCESS_ANIMATION to "+${event.amountMl}ml"
+                }
+                is RecordEvent.Failure -> {
+                    ConfirmationOverlay.FAILURE_ANIMATION to "記録失敗"
+                }
+            }
+            ConfirmationOverlay()
+                .setType(type)
+                .setMessage(message)
+                .showOn(activity)
+        }
+    }
 
     BoxWithConstraints(
         modifier = Modifier

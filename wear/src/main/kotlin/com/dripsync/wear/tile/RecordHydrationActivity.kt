@@ -1,11 +1,10 @@
 package com.dripsync.wear.tile
 
-import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
-import androidx.wear.activity.ConfirmationActivity
 import androidx.wear.tiles.TileService
+import androidx.wear.widget.ConfirmationOverlay
 import com.dripsync.shared.data.model.SourceDevice
 import com.dripsync.shared.data.repository.HydrationRepository
 import dagger.hilt.android.AndroidEntryPoint
@@ -39,12 +38,12 @@ class RecordHydrationActivity : ComponentActivity() {
                         .requestUpdate(HydrationTileService::class.java)
 
                     showConfirmation(
-                        ConfirmationActivity.SUCCESS_ANIMATION,
+                        ConfirmationOverlay.SUCCESS_ANIMATION,
                         "+${amountMl}ml"
                     )
                 } catch (e: Exception) {
                     showConfirmation(
-                        ConfirmationActivity.FAILURE_ANIMATION,
+                        ConfirmationOverlay.FAILURE_ANIMATION,
                         "記録失敗"
                     )
                 }
@@ -54,12 +53,11 @@ class RecordHydrationActivity : ComponentActivity() {
         }
     }
 
-    private fun showConfirmation(animationType: Int, message: String) {
-        val intent = Intent(this, ConfirmationActivity::class.java).apply {
-            putExtra(ConfirmationActivity.EXTRA_ANIMATION_TYPE, animationType)
-            putExtra(ConfirmationActivity.EXTRA_MESSAGE, message)
-        }
-        startActivity(intent)
-        finish()
+    private fun showConfirmation(type: Int, message: String) {
+        ConfirmationOverlay()
+            .setType(type)
+            .setMessage(message)
+            .setOnAnimationFinishedListener { finish() }
+            .showOn(this)
     }
 }

@@ -1,14 +1,20 @@
 package com.dripsync.wear.ui.home
 
+import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.wear.tiles.TileService
 import com.dripsync.shared.data.model.SourceDevice
 import com.dripsync.shared.data.preferences.PresetSettings
 import com.dripsync.shared.data.preferences.UserPreferencesRepository
 import com.dripsync.shared.data.repository.HydrationRepository
+import com.dripsync.wear.tile.HydrationTileService
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
@@ -32,11 +38,20 @@ data class HomeUiState(
         }
 }
 
+sealed class RecordEvent {
+    data class Success(val amountMl: Int) : RecordEvent()
+    data object Failure : RecordEvent()
+}
+
 @HiltViewModel
 class HomeViewModel @Inject constructor(
+    private val application: Application,
     private val hydrationRepository: HydrationRepository,
     private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
+
+    private val _recordEvent = MutableSharedFlow<RecordEvent>()
+    val recordEvent: SharedFlow<RecordEvent> = _recordEvent.asSharedFlow()
 
     val uiState: StateFlow<HomeUiState> = combine(
         hydrationRepository.observeTodayTotal(),
@@ -55,10 +70,18 @@ class HomeViewModel @Inject constructor(
 
     fun recordHydration(amountMl: Int) {
         viewModelScope.launch {
-            hydrationRepository.recordHydration(
-                amountMl = amountMl,
-                sourceDevice = SourceDevice.WEAR
-            )
+            try {
+                hydrationRepository.recordHydration(
+                    amountMl = amountMl,
+                    sourceDevice = SourceDevice.WEAR
+                )
+                // タイルを更新
+                TileService.getUpdater(application)
+                    .requestUpdate(HydrationTileService::class.java)
+                _recordEvent.emit(RecordEvent.Success(amountMl))
+            } catch (e: Exception) {
+                _recordEvent.emit(RecordEvent.Failure)
+            }
         }
     }
 }
