@@ -2,20 +2,26 @@
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
-    android:viewportWidth="108"
-    android:viewportHeight="108">
-    <!-- 水滴のアイコン -->
+    android:viewportWidth="36"
+    android:viewportHeight="36">
+    <!-- Lucide Droplets icon - セーフゾーン内に中央配置 -->
+    <!-- 36x36 viewportで24x24コンテンツを中央に配置（+6オフセット） -->
+
+    <!-- 小さい水滴（左） -->
     <path
-        android:fillColor="#4FC3F7"
-        android:pathData="M54,24
-                          C54,24 36,48 36,66
-                          C36,75.94 44.06,84 54,84
-                          C63.94,84 72,75.94 72,66
-                          C72,48 54,24 54,24Z" />
+        android:pathData="M13,22.3c2.2,0 4,-1.83 4,-4.05 0,-1.16 -0.57,-2.26 -1.71,-3.19S13.29,12.75 13,11.3c-0.29,1.45 -1.14,2.84 -2.29,3.76S9,17.1 9,18.25c0,2.22 1.8,4.05 4,4.05z"
+        android:strokeWidth="2"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#06B6D4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
+
+    <!-- 大きい水滴（右） -->
     <path
-        android:fillColor="#81D4FA"
-        android:pathData="M54,30
-                          C54,30 42,48 42,63
-                          C42,69.63 47.37,75 54,75
-                          C54,75 54,30 54,30Z" />
+        android:pathData="M18.56,12.6A10.97,10.97 0,0 0,20 9.02c0.5,2.5 2,4.9 4,6.5s3,3.5 3,5.5a6.98,6.98 0,0 1,-11.91 4.97"
+        android:strokeWidth="2"
+        android:fillColor="@android:color/transparent"
+        android:strokeColor="#06B6D4"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round"/>
 </vector>

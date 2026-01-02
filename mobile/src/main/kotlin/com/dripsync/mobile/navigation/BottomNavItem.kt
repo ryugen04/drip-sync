@@ -1,12 +1,12 @@
 package com.dripsync.mobile.navigation
 
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.automirrored.filled.TrendingUp
+import androidx.compose.material.icons.automirrored.outlined.TrendingUp
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.WaterDrop
-import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.WaterDrop
 import androidx.compose.ui.graphics.vector.ImageVector
 import com.dripsync.mobile.R
 
@@ -22,14 +22,14 @@ enum class BottomNavItem(
     DASHBOARD(
         destination = DripSyncDestination.Dashboard,
         labelResId = R.string.nav_dashboard,
-        selectedIcon = Icons.Filled.WaterDrop,
-        unselectedIcon = Icons.Outlined.WaterDrop
+        selectedIcon = Icons.Filled.Home,
+        unselectedIcon = Icons.Outlined.Home
     ),
-    HISTORY(
-        destination = DripSyncDestination.History,
-        labelResId = R.string.nav_history,
-        selectedIcon = Icons.Filled.History,
-        unselectedIcon = Icons.Outlined.History
+    STATS(
+        destination = DripSyncDestination.Stats,
+        labelResId = R.string.nav_stats,
+        selectedIcon = Icons.AutoMirrored.Filled.TrendingUp,
+        unselectedIcon = Icons.AutoMirrored.Outlined.TrendingUp
     ),
     SETTINGS(
         destination = DripSyncDestination.Settings,

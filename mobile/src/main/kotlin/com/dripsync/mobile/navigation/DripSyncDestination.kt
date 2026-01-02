@@ -6,6 +6,6 @@ package com.dripsync.mobile.navigation
 sealed class DripSyncDestination(val route: String) {
     // BottomNav destinations
     data object Dashboard : DripSyncDestination("dashboard")
-    data object History : DripSyncDestination("history")
+    data object Stats : DripSyncDestination("stats")
     data object Settings : DripSyncDestination("settings")
 }

@@ -182,9 +182,9 @@ private fun HistoryItem(
 
     // アイコンを量に応じて選択
     val iconRes = when {
-        record.amountMl <= 200 -> R.drawable.cup
-        record.amountMl <= 500 -> R.drawable.glass
-        else -> R.drawable.bottle
+        record.amountMl <= 200 -> R.drawable.ic_coffee
+        record.amountMl <= 500 -> R.drawable.ic_glass
+        else -> R.drawable.ic_bottle
     }
 
     Row(

@@ -5,11 +5,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -18,8 +20,13 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.dripsync.mobile.ui.dashboard.DashboardScreen
-import com.dripsync.mobile.ui.history.HistoryScreen
 import com.dripsync.mobile.ui.settings.SettingsScreen
+import com.dripsync.mobile.ui.stats.StatsScreen
+
+// カラーパレット
+private val CyanBright = Color(0xFF06B6D4)
+private val NavBarBackground = Color(0xFF0F172A)
+private val GrayText = Color(0xFF64748B)
 
 @Composable
 fun DripSyncNavHost(
@@ -31,8 +38,11 @@ fun DripSyncNavHost(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = NavBarBackground,
         bottomBar = {
-            NavigationBar {
+            NavigationBar(
+                containerColor = NavBarBackground
+            ) {
                 BottomNavItem.entries.forEach { item ->
                     val selected = currentDestination?.hierarchy?.any {
                         it.route == item.destination.route
@@ -47,6 +57,13 @@ fun DripSyncNavHost(
                         },
                         label = { Text(stringResource(item.labelResId)) },
                         selected = selected,
+                        colors = NavigationBarItemDefaults.colors(
+                            selectedIconColor = CyanBright,
+                            selectedTextColor = CyanBright,
+                            unselectedIconColor = GrayText,
+                            unselectedTextColor = GrayText,
+                            indicatorColor = CyanBright.copy(alpha = 0.15f)
+                        ),
                         onClick = {
                             navController.navigate(item.destination.route) {
                                 popUpTo(navController.graph.findStartDestination().id) {
@@ -69,8 +86,8 @@ fun DripSyncNavHost(
             composable(DripSyncDestination.Dashboard.route) {
                 DashboardScreen()
             }
-            composable(DripSyncDestination.History.route) {
-                HistoryScreen()
+            composable(DripSyncDestination.Stats.route) {
+                StatsScreen()
             }
             composable(DripSyncDestination.Settings.route) {
                 SettingsScreen()

@@ -117,10 +117,10 @@ class HydrationTileService : SuspendingTileService() {
     override suspend fun resourcesRequest(requestParams: RequestBuilders.ResourcesRequest): ResourceBuilders.Resources {
         return ResourceBuilders.Resources.Builder()
             .setVersion(RESOURCES_VERSION)
-            .addIdToImageMapping(ID_DROP_ICON, createImageResource(R.drawable.drop))
-            .addIdToImageMapping(ID_CUP_ICON, createImageResource(R.drawable.cup))
-            .addIdToImageMapping(ID_GLASS_ICON, createImageResource(R.drawable.glass))
-            .addIdToImageMapping(ID_BOTTLE_ICON, createImageResource(R.drawable.bottle))
+            .addIdToImageMapping(ID_DROP_ICON, createImageResource(R.drawable.ic_dripsync_logo))
+            .addIdToImageMapping(ID_CUP_ICON, createImageResource(R.drawable.ic_coffee))
+            .addIdToImageMapping(ID_GLASS_ICON, createImageResource(R.drawable.ic_glass))
+            .addIdToImageMapping(ID_BOTTLE_ICON, createImageResource(R.drawable.ic_bottle))
             .build()
     }
 

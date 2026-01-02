@@ -4,7 +4,7 @@
 
     <!-- Navigation -->
     <string name="nav_dashboard">ホーム</string>
-    <string name="nav_history">履歴</string>
+    <string name="nav_stats">統計</string>
     <string name="nav_settings">設定</string>
 
     <!-- Dashboard -->

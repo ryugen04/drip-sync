@@ -2,6 +2,7 @@ package com.dripsync.mobile.ui.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dripsync.mobile.health.HealthConnectRepository
 import com.dripsync.mobile.ui.components.DailyChartData
 import com.dripsync.shared.data.model.SourceDevice
 import com.dripsync.shared.data.preferences.PresetSettings
@@ -68,7 +69,8 @@ sealed class DashboardEvent {
 @HiltViewModel
 class DashboardViewModel @Inject constructor(
     private val hydrationRepository: HydrationRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val healthConnectRepository: HealthConnectRepository
 ) : ViewModel() {
 
     private val _event = MutableSharedFlow<DashboardEvent>()
@@ -110,6 +112,8 @@ class DashboardViewModel @Inject constructor(
                 _event.emit(DashboardEvent.RecordSuccess(amountMl))
                 // 週間データを更新
                 loadWeeklyData()
+                // Health Connectに同期
+                healthConnectRepository.syncToHealthConnect()
             } catch (e: Exception) {
                 _event.emit(DashboardEvent.RecordFailure)
             }

@@ -99,9 +99,9 @@ private fun PresetSettingItem(
 ) {
     // アイコンを量に応じて選択
     val iconRes = when {
-        amountMl <= 200 -> R.drawable.cup
-        amountMl <= 500 -> R.drawable.glass
-        else -> R.drawable.bottle
+        amountMl <= 200 -> R.drawable.ic_coffee
+        amountMl <= 500 -> R.drawable.ic_glass
+        else -> R.drawable.ic_bottle
     }
 
     Row(

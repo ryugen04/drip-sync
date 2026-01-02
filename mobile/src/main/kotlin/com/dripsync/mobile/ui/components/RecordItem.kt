@@ -14,7 +14,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocalCafe
 import androidx.compose.material.icons.filled.LocalDrink
-import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -25,9 +24,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dripsync.mobile.R
 import com.dripsync.shared.domain.model.Hydration
 import java.time.format.DateTimeFormatter
 
@@ -73,7 +75,7 @@ fun RecordItem(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    imageVector = getIconForAmount(record.amountMl),
+                    painter = getIconPainterForAmount(record.amountMl),
                     contentDescription = null,
                     tint = CyanBright,
                     modifier = Modifier.size(24.dp)
@@ -113,10 +115,11 @@ fun RecordItem(
     }
 }
 
-private fun getIconForAmount(amountMl: Int): ImageVector {
+@Composable
+private fun getIconPainterForAmount(amountMl: Int): Painter {
     return when {
-        amountMl <= 200 -> Icons.Filled.LocalCafe
-        amountMl <= 400 -> Icons.Filled.LocalDrink
-        else -> Icons.Filled.WaterDrop
+        amountMl <= 200 -> rememberVectorPainter(Icons.Filled.LocalCafe)
+        amountMl <= 400 -> rememberVectorPainter(Icons.Filled.LocalDrink)
+        else -> painterResource(R.drawable.ic_dripsync_logo)
     }
 }

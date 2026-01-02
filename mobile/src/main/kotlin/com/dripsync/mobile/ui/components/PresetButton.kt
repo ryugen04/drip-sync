@@ -11,7 +11,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalCafe
 import androidx.compose.material.icons.filled.LocalDrink
-import androidx.compose.material.icons.filled.WaterDrop
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -20,9 +19,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.dripsync.mobile.R
 
 // カラーパレット
 private val CyanBright = Color(0xFF00E5FF)
@@ -40,7 +42,7 @@ fun PresetButton(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val icon = getIconForAmount(amountMl)
+    val icon = getIconPainterForAmount(amountMl)
     val displayText = formatAmount(amountMl)
 
     Column(
@@ -57,7 +59,7 @@ fun PresetButton(
             contentAlignment = Alignment.Center
         ) {
             Icon(
-                imageVector = icon,
+                painter = icon,
                 contentDescription = "$amountMl ml",
                 tint = CyanBright,
                 modifier = Modifier.size(28.dp)
@@ -73,11 +75,12 @@ fun PresetButton(
     }
 }
 
-private fun getIconForAmount(amountMl: Int): ImageVector {
+@Composable
+private fun getIconPainterForAmount(amountMl: Int): Painter {
     return when {
-        amountMl <= 200 -> Icons.Filled.LocalCafe       // カップ
-        amountMl <= 400 -> Icons.Filled.LocalDrink      // グラス
-        else -> Icons.Filled.WaterDrop                   // ボトル
+        amountMl <= 200 -> rememberVectorPainter(Icons.Filled.LocalCafe)       // カップ
+        amountMl <= 400 -> rememberVectorPainter(Icons.Filled.LocalDrink)      // グラス
+        else -> painterResource(R.drawable.ic_dripsync_logo)                   // カスタムロゴ
     }
 }
 

@@ -100,7 +100,7 @@ class HydrationComplicationService : ComplicationDataSourceService() {
             .setTitle(PlainComplicationText.Builder(percentText).build())
             .setMonochromaticImage(
                 MonochromaticImage.Builder(
-                    Icon.createWithResource(this, R.drawable.drop)
+                    Icon.createWithResource(this, R.drawable.ic_dripsync_logo)
                 ).build()
             )
             .setTapAction(createTapAction())
@@ -126,7 +126,7 @@ class HydrationComplicationService : ComplicationDataSourceService() {
             .setText(PlainComplicationText.Builder(displayText).build())
             .setMonochromaticImage(
                 MonochromaticImage.Builder(
-                    Icon.createWithResource(this, R.drawable.drop)
+                    Icon.createWithResource(this, R.drawable.ic_dripsync_logo)
                 ).build()
             )
             .setTapAction(createTapAction())
@@ -142,7 +142,7 @@ class HydrationComplicationService : ComplicationDataSourceService() {
             .setTitle(PlainComplicationText.Builder("60%").build())
             .setMonochromaticImage(
                 MonochromaticImage.Builder(
-                    Icon.createWithResource(this, R.drawable.drop)
+                    Icon.createWithResource(this, R.drawable.ic_dripsync_logo)
                 ).build()
             )
             .build()
@@ -158,7 +158,7 @@ class HydrationComplicationService : ComplicationDataSourceService() {
             .setText(PlainComplicationText.Builder("1.2L").build())
             .setMonochromaticImage(
                 MonochromaticImage.Builder(
-                    Icon.createWithResource(this, R.drawable.drop)
+                    Icon.createWithResource(this, R.drawable.ic_dripsync_logo)
                 ).build()
             )
             .build()
