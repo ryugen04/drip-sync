@@ -8,11 +8,16 @@ plugins {
     alias(libs.plugins.hilt)
 }
 
+// 署名設定の読み込み（ローカル: keystore.properties、CI: 環境変数）
 val keystorePropertiesFile = rootProject.file("keystore.properties")
 val keystoreProperties = Properties().apply {
     if (keystorePropertiesFile.exists()) {
         load(keystorePropertiesFile.inputStream())
     }
+}
+
+fun getSigningProperty(key: String): String {
+    return System.getenv(key) ?: keystoreProperties.getProperty(key) ?: ""
 }
 
 android {
@@ -29,11 +34,12 @@ android {
 
     signingConfigs {
         create("release") {
-            if (keystorePropertiesFile.exists()) {
-                storeFile = file(keystoreProperties.getProperty("storeFile") ?: "")
-                storePassword = keystoreProperties.getProperty("storePassword") ?: ""
-                keyAlias = keystoreProperties.getProperty("keyAlias") ?: ""
-                keyPassword = keystoreProperties.getProperty("keyPassword") ?: ""
+            val storeFilePath = getSigningProperty("storeFile")
+            if (storeFilePath.isNotEmpty()) {
+                storeFile = rootProject.file(storeFilePath)
+                storePassword = getSigningProperty("storePassword")
+                keyAlias = getSigningProperty("keyAlias")
+                keyPassword = getSigningProperty("keyPassword")
             }
         }
     }
@@ -51,7 +57,8 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = if (keystorePropertiesFile.exists()) {
+            val hasSigningConfig = getSigningProperty("storeFile").isNotEmpty()
+            signingConfig = if (hasSigningConfig) {
                 signingConfigs.getByName("release")
             } else {
                 signingConfigs.getByName("debug")

@@ -1,0 +1,128 @@
+name: Build and Deploy to Firebase
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      flavor:
+        description: 'Build flavor'
+        required: true
+        default: 'prod'
+        type: choice
+        options:
+          - dev
+          - prod
+
+env:
+  JAVA_VERSION: '17'
+
+jobs:
+  build:
+    name: Build APKs
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ env.JAVA_VERSION }}
+          distribution: 'temurin'
+          cache: gradle
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+
+      - name: Decode Keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > release.keystore
+
+      - name: Build Release APKs
+        env:
+          storeFile: release.keystore
+          storePassword: ${{ secrets.KEYSTORE_PASSWORD }}
+          keyAlias: ${{ secrets.KEY_ALIAS }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          FLAVOR=${{ github.event.inputs.flavor || 'prod' }}
+          ./gradlew :mobile:assemble${FLAVOR^}Release :wear:assemble${FLAVOR^}Release
+
+      - name: Upload Mobile APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-apk
+          path: mobile/build/outputs/apk/**/release/*.apk
+          retention-days: 7
+
+      - name: Upload Wear APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: wear-apk
+          path: wear/build/outputs/apk/**/release/*.apk
+          retention-days: 7
+
+  deploy-firebase:
+    name: Deploy to Firebase App Distribution
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download Mobile APK
+        uses: actions/download-artifact@v4
+        with:
+          name: mobile-apk
+          path: mobile-apk
+
+      - name: Download Wear APK
+        uses: actions/download-artifact@v4
+        with:
+          name: wear-apk
+          path: wear-apk
+
+      - name: Find APK files
+        id: find-apks
+        run: |
+          MOBILE_APK=$(find mobile-apk -name "*.apk" | head -1)
+          WEAR_APK=$(find wear-apk -name "*.apk" | head -1)
+          echo "mobile_apk=$MOBILE_APK" >> $GITHUB_OUTPUT
+          echo "wear_apk=$WEAR_APK" >> $GITHUB_OUTPUT
+          echo "Mobile APK: $MOBILE_APK"
+          echo "Wear APK: $WEAR_APK"
+
+      - name: Deploy Mobile to Firebase
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_MOBILE_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: testers
+          file: ${{ steps.find-apks.outputs.mobile_apk }}
+          releaseNotes: |
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Message: ${{ github.event.head_commit.message }}
+
+      - name: Deploy Wear to Firebase
+        uses: wzieba/Firebase-Distribution-Github-Action@v1
+        with:
+          appId: ${{ secrets.FIREBASE_WEAR_APP_ID }}
+          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          groups: testers
+          file: ${{ steps.find-apks.outputs.wear_apk }}
+          releaseNotes: |
+            Branch: ${{ github.ref_name }}
+            Commit: ${{ github.sha }}
+            Message: ${{ github.event.head_commit.message }}
