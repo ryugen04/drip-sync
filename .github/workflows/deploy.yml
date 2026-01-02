@@ -76,14 +76,14 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: mobile-aab
-          path: mobile/build/outputs/bundle/**/release/*.aab
+          path: mobile/build/outputs/bundle/prodRelease/*.aab
           retention-days: 30
 
       - name: Upload Wear AAB
         uses: actions/upload-artifact@v4
         with:
           name: wear-aab
-          path: wear/build/outputs/bundle/**/release/*.aab
+          path: wear/build/outputs/bundle/prodRelease/*.aab
           retention-days: 30
 
   deploy-firebase:
