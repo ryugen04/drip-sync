@@ -108,7 +108,6 @@ jobs:
         with:
           appId: ${{ secrets.FIREBASE_MOBILE_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          groups: testers
           file: ${{ steps.find-apks.outputs.mobile_apk }}
           releaseNotes: |
             Branch: ${{ github.ref_name }}
@@ -120,7 +119,6 @@ jobs:
         with:
           appId: ${{ secrets.FIREBASE_WEAR_APP_ID }}
           serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          groups: testers
           file: ${{ steps.find-apks.outputs.wear_apk }}
           releaseNotes: |
             Branch: ${{ github.ref_name }}
