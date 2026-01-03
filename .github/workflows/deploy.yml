@@ -119,7 +119,7 @@ jobs:
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
-          packageName: com.dripsync.mobile
+          packageName: com.dripsync
           releaseFiles: ${{ steps.find-aabs.outputs.mobile_aab }}
           track: internal
           status: completed
@@ -128,7 +128,7 @@ jobs:
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
-          packageName: com.dripsync.wear
+          packageName: com.dripsync
           releaseFiles: ${{ steps.find-aabs.outputs.wear_aab }}
           track: internal
           status: completed
