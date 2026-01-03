@@ -28,7 +28,7 @@ android {
         applicationId = "com.dripsync"
         minSdk = libs.versions.minSdkWear.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 6
+        versionCode = 8
         versionName = "1.0.1"
     }
 
