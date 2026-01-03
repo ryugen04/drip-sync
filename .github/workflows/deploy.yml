@@ -122,7 +122,7 @@ jobs:
           packageName: com.dripsync.mobile
           releaseFiles: ${{ steps.find-aabs.outputs.mobile_aab }}
           track: internal
-          status: completed
+          status: draft
 
       - name: Deploy Wear to Play Store
         uses: r0adkll/upload-google-play@v1
@@ -131,4 +131,4 @@ jobs:
           packageName: com.dripsync.wear
           releaseFiles: ${{ steps.find-aabs.outputs.wear_aab }}
           track: internal
-          status: completed
+          status: draft
