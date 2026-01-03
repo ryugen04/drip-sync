@@ -86,58 +86,49 @@ jobs:
           path: wear/build/outputs/bundle/prodRelease/*.aab
           retention-days: 30
 
-  deploy-firebase:
-    name: Deploy to Firebase App Distribution
+  deploy-play-store:
+    name: Deploy to Google Play Internal Testing
     needs: build
     runs-on: ubuntu-latest
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Download Mobile APK
+      - name: Download Mobile AAB
         uses: actions/download-artifact@v4
         with:
-          name: mobile-apk
-          path: mobile-apk
+          name: mobile-aab
+          path: mobile-aab
 
-      - name: Download Wear APK
+      - name: Download Wear AAB
         uses: actions/download-artifact@v4
         with:
-          name: wear-apk
-          path: wear-apk
+          name: wear-aab
+          path: wear-aab
 
-      - name: Find APK files
-        id: find-apks
+      - name: Find AAB files
+        id: find-aabs
         run: |
-          MOBILE_APK=$(find mobile-apk -name "*.apk" | head -1)
-          WEAR_APK=$(find wear-apk -name "*.apk" | head -1)
-          echo "mobile_apk=$MOBILE_APK" >> $GITHUB_OUTPUT
-          echo "wear_apk=$WEAR_APK" >> $GITHUB_OUTPUT
-          echo "Mobile APK: $MOBILE_APK"
-          echo "Wear APK: $WEAR_APK"
+          MOBILE_AAB=$(find mobile-aab -name "*.aab" | head -1)
+          WEAR_AAB=$(find wear-aab -name "*.aab" | head -1)
+          echo "mobile_aab=$MOBILE_AAB" >> $GITHUB_OUTPUT
+          echo "wear_aab=$WEAR_AAB" >> $GITHUB_OUTPUT
+          echo "Mobile AAB: $MOBILE_AAB"
+          echo "Wear AAB: $WEAR_AAB"
 
-      - name: Deploy Mobile to Firebase
-        uses: wzieba/Firebase-Distribution-Github-Action@v1
+      - name: Deploy Mobile to Play Store
+        uses: r0adkll/upload-google-play@v1
         with:
-          appId: ${{ secrets.FIREBASE_MOBILE_APP_ID }}
-          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          groups: testers
-          file: ${{ steps.find-apks.outputs.mobile_apk }}
-          releaseNotes: |
-            Branch: ${{ github.ref_name }}
-            Commit: ${{ github.sha }}
-            Message: ${{ github.event.head_commit.message }}
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
+          packageName: com.dripsync.mobile
+          releaseFiles: ${{ steps.find-aabs.outputs.mobile_aab }}
+          track: internal
+          status: completed
 
-      - name: Deploy Wear to Firebase
-        uses: wzieba/Firebase-Distribution-Github-Action@v1
+      - name: Deploy Wear to Play Store
+        uses: r0adkll/upload-google-play@v1
         with:
-          appId: ${{ secrets.FIREBASE_WEAR_APP_ID }}
-          serviceCredentialsFileContent: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
-          groups: testers
-          file: ${{ steps.find-apks.outputs.wear_apk }}
-          releaseNotes: |
-            Branch: ${{ github.ref_name }}
-            Commit: ${{ github.sha }}
-            Message: ${{ github.event.head_commit.message }}
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
+          packageName: com.dripsync.wear
+          releaseFiles: ${{ steps.find-aabs.outputs.wear_aab }}
+          track: internal
+          status: completed
