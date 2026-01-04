@@ -3,8 +3,11 @@ package com.dripsync.mobile.ui.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dripsync.mobile.health.HealthConnectRepository
+import com.dripsync.mobile.sync.DataLayerRepository
 import com.dripsync.mobile.ui.components.DailyChartData
+import com.dripsync.shared.data.model.BeverageType
 import com.dripsync.shared.data.model.SourceDevice
+import java.time.Instant
 import com.dripsync.shared.data.preferences.PresetSettings
 import com.dripsync.shared.data.preferences.UserPreferencesRepository
 import com.dripsync.shared.data.repository.HydrationRepository
@@ -70,7 +73,8 @@ sealed class DashboardEvent {
 class DashboardViewModel @Inject constructor(
     private val hydrationRepository: HydrationRepository,
     private val userPreferencesRepository: UserPreferencesRepository,
-    private val healthConnectRepository: HealthConnectRepository
+    private val healthConnectRepository: HealthConnectRepository,
+    private val dataLayerRepository: DataLayerRepository
 ) : ViewModel() {
 
     private val _event = MutableSharedFlow<DashboardEvent>()
@@ -105,7 +109,7 @@ class DashboardViewModel @Inject constructor(
     fun recordHydration(amountMl: Int) {
         viewModelScope.launch {
             try {
-                hydrationRepository.recordHydration(
+                val recordId = hydrationRepository.recordHydration(
                     amountMl = amountMl,
                     sourceDevice = SourceDevice.MOBILE
                 )
@@ -114,6 +118,18 @@ class DashboardViewModel @Inject constructor(
                 loadWeeklyData()
                 // Health Connectに同期
                 healthConnectRepository.syncToHealthConnect()
+                // Wearに同期
+                try {
+                    dataLayerRepository.syncHydrationRecord(
+                        recordId = recordId,
+                        amountMl = amountMl,
+                        beverageType = BeverageType.WATER,
+                        recordedAt = Instant.now(),
+                        sourceDevice = SourceDevice.MOBILE
+                    )
+                } catch (e: Exception) {
+                    // Wear未接続時はエラーを無視
+                }
             } catch (e: Exception) {
                 _event.emit(DashboardEvent.RecordFailure)
             }

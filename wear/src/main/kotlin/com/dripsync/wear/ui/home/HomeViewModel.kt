@@ -4,11 +4,14 @@ import android.app.Application
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.wear.tiles.TileService
+import com.dripsync.shared.data.model.BeverageType
 import com.dripsync.shared.data.model.SourceDevice
 import com.dripsync.shared.data.preferences.PresetSettings
 import com.dripsync.shared.data.preferences.UserPreferencesRepository
 import com.dripsync.shared.data.repository.HydrationRepository
 import com.dripsync.wear.complication.HydrationComplicationService
+import com.dripsync.wear.sync.DataLayerRepository
+import java.time.Instant
 import com.dripsync.wear.tile.HydrationTileService
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -48,7 +51,8 @@ sealed class RecordEvent {
 class HomeViewModel @Inject constructor(
     private val application: Application,
     private val hydrationRepository: HydrationRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val dataLayerRepository: DataLayerRepository
 ) : ViewModel() {
 
     private val _recordEvent = MutableSharedFlow<RecordEvent>()
@@ -72,8 +76,16 @@ class HomeViewModel @Inject constructor(
     fun recordHydration(amountMl: Int) {
         viewModelScope.launch {
             try {
-                hydrationRepository.recordHydration(
+                val recordId = hydrationRepository.recordHydration(
                     amountMl = amountMl,
+                    sourceDevice = SourceDevice.WEAR
+                )
+                // Mobileに同期
+                dataLayerRepository.syncHydrationRecord(
+                    recordId = recordId,
+                    amountMl = amountMl,
+                    beverageType = BeverageType.WATER,
+                    recordedAt = Instant.now(),
                     sourceDevice = SourceDevice.WEAR
                 )
                 // タイルを更新
