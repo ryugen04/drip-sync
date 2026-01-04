@@ -20,6 +20,7 @@ import androidx.compose.ui.platform.LocalDensity
 import kotlin.math.min
 import kotlin.math.sqrt
 import android.app.Activity
+import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -181,16 +182,19 @@ fun HomeScreen(
                 PresetButton(
                     amountMl = uiState.presets.preset1Ml,
                     dailyGoalMl = uiState.dailyGoalMl,
+                    iconRes = R.drawable.ic_coffee,
                     onClick = { viewModel.recordHydration(uiState.presets.preset1Ml) }
                 )
                 PresetButton(
                     amountMl = uiState.presets.preset2Ml,
                     dailyGoalMl = uiState.dailyGoalMl,
+                    iconRes = R.drawable.ic_glass,
                     onClick = { viewModel.recordHydration(uiState.presets.preset2Ml) }
                 )
                 PresetButton(
                     amountMl = uiState.presets.preset3Ml,
                     dailyGoalMl = uiState.dailyGoalMl,
+                    iconRes = R.drawable.ic_bottle,
                     onClick = { viewModel.recordHydration(uiState.presets.preset3Ml) }
                 )
             }
@@ -250,18 +254,12 @@ private fun CircularProgressArc(
 private fun PresetButton(
     amountMl: Int,
     dailyGoalMl: Int,
+    @DrawableRes iconRes: Int,
     onClick: () -> Unit
 ) {
     val presetProgress = if (dailyGoalMl > 0) {
         (amountMl.toFloat() / dailyGoalMl).coerceIn(0f, 1f)
     } else 0f
-
-    // アイコンを量に応じて選択
-    val iconRes = when {
-        amountMl <= 200 -> R.drawable.ic_coffee
-        amountMl <= 500 -> R.drawable.ic_glass
-        else -> R.drawable.ic_bottle
-    }
 
     // ボタン + アイコンを重ねて配置
     Box(

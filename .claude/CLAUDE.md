@@ -142,8 +142,8 @@ mobile と wear は別々のモジュールだが、**versionCode はプロジ�
 
 | モジュール | ファイル | 現在の値 |
 |-----------|---------|---------|
-| mobile | `mobile/build.gradle.kts` | versionCode: 17, versionName: "1.0.6" |
-| wear | `wear/build.gradle.kts` | versionCode: 18, versionName: "1.0.6" |
+| mobile | `mobile/build.gradle.kts` | versionCode: 21, versionName: "1.0.8" |
+| wear | `wear/build.gradle.kts` | versionCode: 22, versionName: "1.0.8" |
 
 **重要なルール:**
 
@@ -167,8 +167,8 @@ mobile と wear は別々のモジュールだが、**versionCode はプロジ�
 // wear/build.gradle.kts
 android {
     defaultConfig {
-        versionCode = 17  // 16 → 17 (全体の通し番号)
-        versionName = "1.0.6"  // パッチバージョンアップ
+        versionCode = 23  // 22 → 23 (全体の通し番号)
+        versionName = "1.0.9"  // パッチバージョンアップ
     }
 }
 ```
@@ -176,10 +176,10 @@ android {
 **例: 次回 mobile と wear 両方を変更する場合**
 ```kotlin
 // mobile/build.gradle.kts
-versionCode = 17  // 15 → 17
+versionCode = 23  // 21 → 23
 
 // wear/build.gradle.kts
-versionCode = 18  // 16 → 18
+versionCode = 24  // 22 → 24
 ```
 
 ## ビルド・実行

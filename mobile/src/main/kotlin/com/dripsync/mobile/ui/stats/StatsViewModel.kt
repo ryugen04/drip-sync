@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
 import java.time.LocalTime
@@ -78,12 +79,17 @@ class StatsViewModel @Inject constructor(
     private val _selectedTab = MutableStateFlow(StatsTab.DAILY)
 
     private val weeklyRecordsFlow = hydrationRepository.observeRecordsByDateRange(weekAgo, today)
+        .onStart { emit(emptyList()) }
     private val todayRecordsFlow = hydrationRepository.observeTodayRecords()
+        .onStart { emit(emptyList()) }
+    private val todayTotalFlow = hydrationRepository.observeTodayTotal()
+        .onStart { emit(0) }
+    private val preferencesFlow = userPreferencesRepository.observePreferences()
 
     val uiState: StateFlow<StatsUiState> = combine(
         _selectedTab,
-        hydrationRepository.observeTodayTotal(),
-        userPreferencesRepository.observePreferences(),
+        todayTotalFlow,
+        preferencesFlow,
         weeklyRecordsFlow,
         todayRecordsFlow
     ) { selectedTab, todayTotal, preferences, weeklyRecords, todayRecords ->
