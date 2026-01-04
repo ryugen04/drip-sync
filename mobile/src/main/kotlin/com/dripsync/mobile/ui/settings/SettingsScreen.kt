@@ -1,6 +1,7 @@
 package com.dripsync.mobile.ui.settings
 
 import android.widget.Toast
+import com.dripsync.mobile.BuildConfig
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
@@ -292,7 +293,7 @@ fun SettingsScreen(
                         modifier = Modifier.padding(bottom = 4.dp)
                     )
                     Text(
-                        text = "バージョン 1.0.0",
+                        text = "バージョン ${BuildConfig.VERSION_NAME}",
                         style = MaterialTheme.typography.bodySmall,
                         color = GrayText
                     )
