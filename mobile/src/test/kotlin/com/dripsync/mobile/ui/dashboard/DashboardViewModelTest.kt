@@ -179,7 +179,15 @@ class DashboardViewModelTest {
 
     @Test
     fun `recordHydration calls repository and syncs to health connect`() = runTest {
-        coEvery { hydrationRepository.recordHydration(any(), any(), any()) } returns "new-id"
+        coEvery {
+            hydrationRepository.recordHydration(
+                amountMl = any(),
+                beverageType = any(),
+                sourceDevice = any(),
+                recordId = any(),
+                recordedAt = any()
+            )
+        } returns "new-id"
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -187,13 +195,29 @@ class DashboardViewModelTest {
         viewModel.recordHydration(250)
         advanceUntilIdle()
 
-        coVerify { hydrationRepository.recordHydration(250, any(), SourceDevice.MOBILE) }
+        coVerify {
+            hydrationRepository.recordHydration(
+                amountMl = 250,
+                sourceDevice = SourceDevice.MOBILE,
+                recordedAt = any(),
+                beverageType = any(),
+                recordId = any()
+            )
+        }
         coVerify { healthConnectRepository.syncToHealthConnect() }
     }
 
     @Test
     fun `recordHydration emits success event`() = runTest {
-        coEvery { hydrationRepository.recordHydration(any(), any(), any()) } returns "new-id"
+        coEvery {
+            hydrationRepository.recordHydration(
+                amountMl = any(),
+                beverageType = any(),
+                sourceDevice = any(),
+                recordId = any(),
+                recordedAt = any()
+            )
+        } returns "new-id"
 
         val viewModel = createViewModel()
         advanceUntilIdle()
@@ -210,7 +234,15 @@ class DashboardViewModelTest {
 
     @Test
     fun `recordHydration emits failure event on error`() = runTest {
-        coEvery { hydrationRepository.recordHydration(any(), any(), any()) } throws Exception("DB error")
+        coEvery {
+            hydrationRepository.recordHydration(
+                amountMl = any(),
+                beverageType = any(),
+                sourceDevice = any(),
+                recordId = any(),
+                recordedAt = any()
+            )
+        } throws Exception("DB error")
 
         val viewModel = createViewModel()
         advanceUntilIdle()
