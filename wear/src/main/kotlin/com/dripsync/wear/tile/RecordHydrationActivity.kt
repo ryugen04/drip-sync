@@ -5,11 +5,14 @@ import androidx.activity.ComponentActivity
 import androidx.lifecycle.lifecycleScope
 import androidx.wear.tiles.TileService
 import androidx.wear.widget.ConfirmationOverlay
+import com.dripsync.shared.data.model.BeverageType
 import com.dripsync.shared.data.model.SourceDevice
 import com.dripsync.shared.data.repository.HydrationRepository
 import com.dripsync.wear.complication.HydrationComplicationService
+import com.dripsync.wear.sync.DataLayerRepository
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import java.time.Instant
 import javax.inject.Inject
 
 /**
@@ -22,6 +25,9 @@ class RecordHydrationActivity : ComponentActivity() {
     @Inject
     lateinit var hydrationRepository: HydrationRepository
 
+    @Inject
+    lateinit var dataLayerRepository: DataLayerRepository
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -30,10 +36,22 @@ class RecordHydrationActivity : ComponentActivity() {
         if (amountMl > 0) {
             lifecycleScope.launch {
                 try {
-                    hydrationRepository.recordHydration(
+                    val now = Instant.now()
+                    val recordId = hydrationRepository.recordHydration(
                         amountMl = amountMl,
+                        sourceDevice = SourceDevice.WEAR,
+                        recordedAt = now
+                    )
+
+                    // Mobileに同期
+                    dataLayerRepository.syncHydrationRecord(
+                        recordId = recordId,
+                        amountMl = amountMl,
+                        beverageType = BeverageType.WATER,
+                        recordedAt = now,
                         sourceDevice = SourceDevice.WEAR
                     )
+
                     // タイルを更新
                     TileService.getUpdater(this@RecordHydrationActivity)
                         .requestUpdate(HydrationTileService::class.java)

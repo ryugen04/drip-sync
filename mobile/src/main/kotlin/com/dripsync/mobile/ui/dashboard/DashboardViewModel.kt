@@ -123,9 +123,11 @@ class DashboardViewModel @Inject constructor(
     fun recordHydration(amountMl: Int) {
         viewModelScope.launch {
             try {
+                val now = Instant.now()
                 val recordId = hydrationRepository.recordHydration(
                     amountMl = amountMl,
-                    sourceDevice = SourceDevice.MOBILE
+                    sourceDevice = SourceDevice.MOBILE,
+                    recordedAt = now
                 )
                 _event.emit(DashboardEvent.RecordSuccess(amountMl))
                 // 週間データを更新
@@ -138,7 +140,7 @@ class DashboardViewModel @Inject constructor(
                         recordId = recordId,
                         amountMl = amountMl,
                         beverageType = BeverageType.WATER,
-                        recordedAt = Instant.now(),
+                        recordedAt = now,
                         sourceDevice = SourceDevice.MOBILE
                     )
                 } catch (e: Exception) {

@@ -93,16 +93,18 @@ class HomeViewModel @Inject constructor(
     fun recordHydration(amountMl: Int) {
         viewModelScope.launch {
             try {
+                val now = Instant.now()
                 val recordId = hydrationRepository.recordHydration(
                     amountMl = amountMl,
-                    sourceDevice = SourceDevice.WEAR
+                    sourceDevice = SourceDevice.WEAR,
+                    recordedAt = now
                 )
                 // Mobileに同期
                 dataLayerRepository.syncHydrationRecord(
                     recordId = recordId,
                     amountMl = amountMl,
                     beverageType = BeverageType.WATER,
-                    recordedAt = Instant.now(),
+                    recordedAt = now,
                     sourceDevice = SourceDevice.WEAR
                 )
                 // タイルを更新

@@ -138,26 +138,48 @@ Co-Authored-By: ..."
 
 ### PR作成時は必ずバージョンを上げる
 
-mobile と wear で個別にバージョン管理されている。変更があったモジュールのバージョンを上げること。
+mobile と wear は別々のモジュールだが、**versionCode はプロジェクト全体で一意な通し番号を使用する。**
 
 | モジュール | ファイル | 現在の値 |
 |-----------|---------|---------|
-| mobile | `mobile/build.gradle.kts` | versionCode: 9, versionName: "1.0.2" |
-| wear | `wear/build.gradle.kts` | versionCode: 10, versionName: "1.0.2" |
+| mobile | `mobile/build.gradle.kts` | versionCode: 15, versionName: "1.0.5" |
+| wear | `wear/build.gradle.kts` | versionCode: 16, versionName: "1.0.5" |
 
-**ルール:**
-- `versionCode`: 必ずインクリメント（Play Store要件）
-- `versionName`: セマンティックバージョニング（MAJOR.MINOR.PATCH）
-- 両モジュールに影響する変更（sharedモジュール等）は両方のバージョンを上げる
+**重要なルール:**
 
+1. **versionCode の採番方法**
+   - **プロジェクト全体で一意な通し番号を使用** (Play Store の要件)
+   - 現在の最大値を確認し、それより大きい番号を割り当てる
+   - mobile と wear で別々にインクリメントしない
+   - 例: 現在の最大が 16 の場合、次は mobile=17 または wear=17
+
+2. **変更があったモジュールのバージョンを上げる**
+   - mobile のみ変更: mobile の versionCode だけインクリメント
+   - wear のみ変更: wear の versionCode だけインクリメント
+   - 両方変更 (shared含む): 両方の versionCode をインクリメント
+
+3. **versionName**
+   - セマンティックバージョニング（MAJOR.MINOR.PATCH）
+   - 通常は mobile と wear で同じバージョンを使用
+
+**例: 次回 wear のみ変更する場合**
 ```kotlin
-// mobile/build.gradle.kts または wear/build.gradle.kts
+// wear/build.gradle.kts
 android {
     defaultConfig {
-        versionCode = 9  // インクリメント
-        versionName = "1.0.2"  // 適切に更新
+        versionCode = 17  // 16 → 17 (全体の通し番号)
+        versionName = "1.0.6"  // パッチバージョンアップ
     }
 }
+```
+
+**例: 次回 mobile と wear 両方を変更する場合**
+```kotlin
+// mobile/build.gradle.kts
+versionCode = 17  // 15 → 17
+
+// wear/build.gradle.kts
+versionCode = 18  // 16 → 18
 ```
 
 ## ビルド・実行
