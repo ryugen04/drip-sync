@@ -3,6 +3,7 @@ package com.dripsync.mobile.ui.dashboard
 import app.cash.turbine.test
 import com.dripsync.mobile.health.HealthConnectRepository
 import com.dripsync.mobile.health.SyncResult
+import com.dripsync.mobile.sync.DataLayerRepository
 import com.dripsync.shared.data.model.BeverageType
 import com.dripsync.shared.data.model.SourceDevice
 import com.dripsync.shared.data.preferences.PresetSettings
@@ -36,6 +37,7 @@ class DashboardViewModelTest {
     private lateinit var hydrationRepository: HydrationRepository
     private lateinit var userPreferencesRepository: UserPreferencesRepository
     private lateinit var healthConnectRepository: HealthConnectRepository
+    private lateinit var dataLayerRepository: DataLayerRepository
 
     private val todayTotalFlow = MutableStateFlow(0)
     private val todayRecordsFlow = MutableStateFlow<List<Hydration>>(emptyList())
@@ -50,6 +52,7 @@ class DashboardViewModelTest {
         hydrationRepository = mockk(relaxed = true)
         userPreferencesRepository = mockk(relaxed = true)
         healthConnectRepository = mockk(relaxed = true)
+        dataLayerRepository = mockk(relaxed = true)
 
         every { hydrationRepository.observeTodayTotal() } returns todayTotalFlow
         every { hydrationRepository.observeTodayRecords() } returns todayRecordsFlow
@@ -67,7 +70,8 @@ class DashboardViewModelTest {
     private fun createViewModel() = DashboardViewModel(
         hydrationRepository = hydrationRepository,
         userPreferencesRepository = userPreferencesRepository,
-        healthConnectRepository = healthConnectRepository
+        healthConnectRepository = healthConnectRepository,
+        dataLayerRepository = dataLayerRepository
     )
 
     @Test
