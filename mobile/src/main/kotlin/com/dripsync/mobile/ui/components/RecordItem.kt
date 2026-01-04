@@ -12,8 +12,6 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.LocalCafe
-import androidx.compose.material.icons.filled.LocalDrink
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -24,13 +22,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.dripsync.mobile.R
+import com.dripsync.shared.data.preferences.PresetSettings
 import com.dripsync.shared.domain.model.Hydration
+import com.dripsync.shared.util.IconUtils
 import java.time.format.DateTimeFormatter
 
 // カラーパレット
@@ -43,12 +41,14 @@ private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
  * 水分摂取記録の1アイテム
  *
  * @param record 記録データ
+ * @param presets プリセット設定（アイコン選択の閾値に使用）
  * @param onDelete 削除ボタンクリック時のコールバック
  * @param showDeleteButton 削除ボタンを表示するか
  */
 @Composable
 fun RecordItem(
     record: Hydration,
+    presets: PresetSettings = PresetSettings(),
     onDelete: (() -> Unit)? = null,
     showDeleteButton: Boolean = true,
     modifier: Modifier = Modifier
@@ -74,8 +74,13 @@ fun RecordItem(
                     .background(IconBackground, CircleShape),
                 contentAlignment = Alignment.Center
             ) {
+                val iconRes = when (IconUtils.getIconTypeForAmount(record.amountMl, presets)) {
+                    IconUtils.IconType.COFFEE -> R.drawable.ic_coffee
+                    IconUtils.IconType.GLASS -> R.drawable.ic_glass
+                    IconUtils.IconType.BOTTLE -> R.drawable.ic_bottle
+                }
                 Icon(
-                    painter = getIconPainterForAmount(record.amountMl),
+                    painter = painterResource(iconRes),
                     contentDescription = null,
                     tint = CyanBright,
                     modifier = Modifier.size(24.dp)
@@ -112,14 +117,5 @@ fun RecordItem(
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun getIconPainterForAmount(amountMl: Int): Painter {
-    return when {
-        amountMl <= 200 -> rememberVectorPainter(Icons.Filled.LocalCafe)
-        amountMl <= 400 -> rememberVectorPainter(Icons.Filled.LocalDrink)
-        else -> painterResource(R.drawable.ic_dripsync_logo)
     }
 }

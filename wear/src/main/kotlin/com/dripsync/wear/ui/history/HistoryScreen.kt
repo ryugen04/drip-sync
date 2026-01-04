@@ -41,7 +41,9 @@ import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Text
 import androidx.wear.widget.ConfirmationOverlay
+import com.dripsync.shared.data.preferences.PresetSettings
 import com.dripsync.shared.domain.model.Hydration
+import com.dripsync.shared.util.IconUtils
 import com.dripsync.wear.R
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -141,6 +143,7 @@ fun HistoryScreen(
                     ) { record ->
                         HistoryItem(
                             record = record,
+                            presets = uiState.presets,
                             onDelete = { viewModel.deleteRecord(record.id) }
                         )
                     }
@@ -175,16 +178,16 @@ private fun DateHeader(
 @Composable
 private fun HistoryItem(
     record: Hydration,
+    presets: PresetSettings,
     onDelete: () -> Unit
 ) {
     val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     var showDeleteButton by remember { mutableStateOf(false) }
 
-    // アイコンを量に応じて選択
-    val iconRes = when {
-        record.amountMl <= 200 -> R.drawable.ic_coffee
-        record.amountMl <= 500 -> R.drawable.ic_glass
-        else -> R.drawable.ic_bottle
+    val iconRes = when (IconUtils.getIconTypeForAmount(record.amountMl, presets)) {
+        IconUtils.IconType.COFFEE -> R.drawable.ic_coffee
+        IconUtils.IconType.GLASS -> R.drawable.ic_glass
+        IconUtils.IconType.BOTTLE -> R.drawable.ic_bottle
     }
 
     Row(

@@ -2,7 +2,9 @@ package com.dripsync.mobile.ui.history
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.dripsync.mobile.sync.DataLayerRepository
 import com.dripsync.shared.data.repository.HydrationRepository
+import com.dripsync.shared.data.preferences.PresetSettings
 import com.dripsync.shared.data.preferences.UserPreferencesRepository
 import com.dripsync.shared.domain.model.Hydration
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,6 +39,7 @@ data class HistoryUiState(
     val daySummaries: Map<LocalDate, DaySummary> = emptyMap(),
     val selectedDayRecords: List<Hydration> = emptyList(),
     val dailyGoalMl: Int = 2000,
+    val presets: PresetSettings = PresetSettings(),
     val isLoading: Boolean = true
 ) {
     val selectedDaySummary: DaySummary?
@@ -54,7 +57,8 @@ sealed class HistoryEvent {
 @HiltViewModel
 class HistoryViewModel @Inject constructor(
     private val hydrationRepository: HydrationRepository,
-    private val userPreferencesRepository: UserPreferencesRepository
+    private val userPreferencesRepository: UserPreferencesRepository,
+    private val dataLayerRepository: DataLayerRepository
 ) : ViewModel() {
 
     private val _event = MutableSharedFlow<HistoryEvent>()
@@ -70,14 +74,15 @@ class HistoryViewModel @Inject constructor(
         _currentMonth,
         _daySummaries,
         _selectedDayRecords,
-        userPreferencesRepository.observeDailyGoal()
-    ) { selectedDate, currentMonth, summaries, records, goalMl ->
+        userPreferencesRepository.observePreferences()
+    ) { selectedDate, currentMonth, summaries, records, prefs ->
         HistoryUiState(
             selectedDate = selectedDate,
             currentMonth = currentMonth,
             daySummaries = summaries,
             selectedDayRecords = records.sortedByDescending { it.recordedAt },
-            dailyGoalMl = goalMl,
+            dailyGoalMl = prefs.dailyGoalMl,
+            presets = prefs.presets,
             isLoading = false
         )
     }.stateIn(
@@ -109,6 +114,12 @@ class HistoryViewModel @Inject constructor(
                 // データを再読み込み
                 loadDayRecords(_selectedDate.value)
                 loadMonthData(_currentMonth.value)
+                // Wearに削除を同期
+                try {
+                    dataLayerRepository.syncDeleteRecord(id)
+                } catch (e: Exception) {
+                    // Wear未接続時はエラーを無視
+                }
             } catch (e: Exception) {
                 _event.emit(HistoryEvent.DeleteFailure)
             }

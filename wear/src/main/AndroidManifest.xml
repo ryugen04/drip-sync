@@ -82,7 +82,11 @@
                 <action android:name="com.google.android.gms.wearable.DATA_CHANGED" />
                 <data
                     android:host="*"
-                    android:pathPrefix="/hydration"
+                    android:pathPrefix="/hydration/record"
+                    android:scheme="wear" />
+                <data
+                    android:host="*"
+                    android:pathPrefix="/hydration/delete"
                     android:scheme="wear" />
                 <data
                     android:host="*"

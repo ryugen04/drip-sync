@@ -182,6 +182,7 @@ fun HistoryScreen(
                     ) { record ->
                         RecordItem(
                             record = record,
+                            presets = uiState.presets,
                             onDelete = { viewModel.deleteRecord(record.id) },
                             showDeleteButton = true
                         )
