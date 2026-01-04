@@ -116,11 +116,20 @@ jobs:
           echo "Mobile AAB: $MOBILE_AAB"
           echo "Wear AAB: $WEAR_AAB"
 
-      - name: Deploy to Play Store
+      - name: Deploy Mobile to Play Store
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
           packageName: com.dripsync
-          releaseFiles: ${{ steps.find-aabs.outputs.all_aabs }}
+          releaseFiles: ${{ steps.find-aabs.outputs.mobile_aab }}
           track: internal
+          status: draft
+
+      - name: Deploy Wear to Play Store
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJsonPlainText: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT }}
+          packageName: com.dripsync
+          releaseFiles: ${{ steps.find-aabs.outputs.wear_aab }}
+          track: wear:internal
           status: draft
