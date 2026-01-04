@@ -48,6 +48,8 @@ class DataLayerRepository @Inject constructor(
             dataMap.putString(DataLayerPaths.KEY_BEVERAGE_TYPE, beverageType.name)
             dataMap.putLong(DataLayerPaths.KEY_RECORDED_AT, recordedAt.toEpochMilli())
             dataMap.putString(DataLayerPaths.KEY_SOURCE_DEVICE, sourceDevice.name)
+            // 同期用タイムスタンプ（Data Layer APIは同一データで変更通知しないため必須）
+            dataMap.putLong(DataLayerPaths.KEY_SYNC_TIMESTAMP, System.currentTimeMillis())
         }.asPutDataRequest().setUrgent()
 
         dataClient.putDataItem(putDataReq).await()
@@ -94,13 +96,11 @@ class DataLayerRepository @Inject constructor(
     /**
      * Wearからの水分記録を処理
      */
-    suspend fun handleHydrationRecordFromWear(dataEvent: DataEvent) {
-        if (dataEvent.type != DataEvent.TYPE_CHANGED) return
+    suspend fun handleHydrationRecordFromWear(eventInfo: DataEventInfo) {
+        if (eventInfo.type != DataEvent.TYPE_CHANGED) return
+        if (!eventInfo.path.startsWith(DataLayerPaths.HYDRATION_RECORD_PATH)) return
 
-        val dataItem = dataEvent.dataItem
-        if (!dataItem.uri.path.orEmpty().startsWith(DataLayerPaths.HYDRATION_RECORD_PATH)) return
-
-        val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+        val dataMap = DataMapItem.fromDataItem(eventInfo.dataItem).dataMap
 
         val recordId = dataMap.getString(DataLayerPaths.KEY_RECORD_ID) ?: return
         val amountMl = dataMap.getInt(DataLayerPaths.KEY_AMOUNT_ML)
@@ -115,6 +115,9 @@ class DataLayerRepository @Inject constructor(
         } catch (e: Exception) {
             SourceDevice.WEAR
         }
+
+        // 自分自身が送信したデータは無視
+        if (sourceDevice == SourceDevice.MOBILE) return
 
         // 既存の記録がなければ追加（同じrecordIdとrecordedAtを使用）
         val existing = hydrationRepository.getRecordById(recordId)
@@ -132,13 +135,11 @@ class DataLayerRepository @Inject constructor(
     /**
      * Wearからの設定変更を処理
      */
-    suspend fun handlePreferencesFromWear(dataEvent: DataEvent) {
-        if (dataEvent.type != DataEvent.TYPE_CHANGED) return
+    suspend fun handlePreferencesFromWear(eventInfo: DataEventInfo) {
+        if (eventInfo.type != DataEvent.TYPE_CHANGED) return
+        if (eventInfo.path != DataLayerPaths.PREFERENCES_PATH) return
 
-        val dataItem = dataEvent.dataItem
-        if (dataItem.uri.path != DataLayerPaths.PREFERENCES_PATH) return
-
-        val dataMap = DataMapItem.fromDataItem(dataItem).dataMap
+        val dataMap = DataMapItem.fromDataItem(eventInfo.dataItem).dataMap
 
         val dailyGoalMl = dataMap.getInt(DataLayerPaths.KEY_DAILY_GOAL_ML)
         val preset1 = dataMap.getInt(DataLayerPaths.KEY_PRESET_1)

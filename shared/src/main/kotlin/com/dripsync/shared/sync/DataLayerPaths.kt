@@ -23,4 +23,5 @@ object DataLayerPaths {
     const val KEY_PRESET_1 = "preset_1"
     const val KEY_PRESET_2 = "preset_2"
     const val KEY_PRESET_3 = "preset_3"
+    const val KEY_SYNC_TIMESTAMP = "sync_timestamp"
 }
