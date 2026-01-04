@@ -191,7 +191,10 @@ private fun DailyCumulativeChart(
                 }
 
                 // 実績カーブ（現在時刻まで）を描画
-                val actualPoints = data.take(currentPointIndex + 1).mapIndexed { index, point ->
+                val actualPoints = data.mapIndexedNotNull { index, point ->
+                    if (index > currentPointIndex) {
+                        return@mapIndexedNotNull null
+                    }
                     val x = if (data.size > 1) {
                         index * (chartWidth / (data.size - 1))
                     } else {

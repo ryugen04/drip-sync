@@ -418,27 +418,33 @@ class HydrationTileService : SuspendingTileService() {
     }
 
     // HomeScreenと同じグラデーション
-    // 0度=12時から時計回りに CyanBright → CyanMid → BluePurple
+    // SweepGradientは3時位置(0度)から開始、Arcは12時位置から開始するため
+    // ColorStopを0.75(270度=12時)オフセットして配置
     private fun createProgressGradient(): ColorBuilders.Brush {
         return ColorBuilders.SweepGradient.Builder(
-            ColorBuilders.ColorStop.Builder(
-                argb(COLOR_CYAN_BRIGHT),
-                TypeBuilders.FloatProp.Builder(0.0f).build()
-            ).build(),
+            // 3時位置 (0.0) = Arcの90度位置 → CyanMid
             ColorBuilders.ColorStop.Builder(
                 argb(COLOR_CYAN_MID),
+                TypeBuilders.FloatProp.Builder(0.0f).build()
+            ).build(),
+            // 6時位置 (0.25) = Arcの180度位置 → BluePurple
+            ColorBuilders.ColorStop.Builder(
+                argb(COLOR_BLUE_PURPLE),
                 TypeBuilders.FloatProp.Builder(0.25f).build()
             ).build(),
+            // 9時位置 (0.5) = Arcの270度位置 → BluePurple
             ColorBuilders.ColorStop.Builder(
                 argb(COLOR_BLUE_PURPLE),
                 TypeBuilders.FloatProp.Builder(0.5f).build()
             ).build(),
-            ColorBuilders.ColorStop.Builder(
-                argb(COLOR_BLUE_PURPLE),
-                TypeBuilders.FloatProp.Builder(0.75f).build()
-            ).build(),
+            // 12時位置 (0.75) = Arcの0度位置(開始) → CyanBright
             ColorBuilders.ColorStop.Builder(
                 argb(COLOR_CYAN_BRIGHT),
+                TypeBuilders.FloatProp.Builder(0.75f).build()
+            ).build(),
+            // 3時位置に戻る (1.0) → CyanMid
+            ColorBuilders.ColorStop.Builder(
+                argb(COLOR_CYAN_MID),
                 TypeBuilders.FloatProp.Builder(1.0f).build()
             ).build()
         ).build()
