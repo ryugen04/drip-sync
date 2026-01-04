@@ -104,6 +104,14 @@ class DashboardViewModel @Inject constructor(
 
     init {
         loadWeeklyData()
+        // 起動時に全記録をWearに同期
+        viewModelScope.launch {
+            try {
+                dataLayerRepository.syncAllTodayRecords()
+            } catch (e: Exception) {
+                // 同期エラーは無視（Wear未接続時など）
+            }
+        }
     }
 
     fun recordHydration(amountMl: Int) {

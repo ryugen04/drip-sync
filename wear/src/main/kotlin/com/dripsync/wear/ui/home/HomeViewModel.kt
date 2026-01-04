@@ -73,6 +73,17 @@ class HomeViewModel @Inject constructor(
         initialValue = HomeUiState()
     )
 
+    init {
+        // 起動時に全記録を同期
+        viewModelScope.launch {
+            try {
+                dataLayerRepository.syncAllTodayRecords()
+            } catch (e: Exception) {
+                // 同期エラーは無視
+            }
+        }
+    }
+
     fun recordHydration(amountMl: Int) {
         viewModelScope.launch {
             try {

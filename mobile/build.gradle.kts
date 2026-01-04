@@ -134,6 +134,11 @@ dependencies {
     // Health Connect
     implementation(libs.health.connect)
 
+    // WorkManager
+    implementation(libs.work.runtime.ktx)
+    implementation(libs.hilt.work)
+    ksp(libs.hilt.work.compiler)
+
     // Wear Data Layer
     implementation(libs.play.services.wearable)
 

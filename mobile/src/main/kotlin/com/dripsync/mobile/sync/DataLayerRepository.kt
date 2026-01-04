@@ -54,6 +54,26 @@ class DataLayerRepository @Inject constructor(
     }
 
     /**
+     * 今日の全記録をWearに同期（起動時・定期同期用）
+     */
+    suspend fun syncAllTodayRecords() {
+        val todayRecords = hydrationRepository.getTodayRecords()
+        todayRecords.forEach { record ->
+            try {
+                syncHydrationRecord(
+                    recordId = record.id,
+                    amountMl = record.amountMl,
+                    beverageType = record.beverageType,
+                    recordedAt = record.recordedAt,
+                    sourceDevice = record.sourceDevice
+                )
+            } catch (e: Exception) {
+                // 個別の同期エラーは無視して続行
+            }
+        }
+    }
+
+    /**
      * 設定をWearに同期
      */
     suspend fun syncPreferences() {
