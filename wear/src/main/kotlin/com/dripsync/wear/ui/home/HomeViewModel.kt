@@ -74,7 +74,13 @@ class HomeViewModel @Inject constructor(
     )
 
     init {
-        // 起動時に全記録を同期
+        syncWithMobile()
+    }
+
+    /**
+     * Mobileと同期（起動時・フォアグラウンド復帰時に呼び出し）
+     */
+    fun syncWithMobile() {
         viewModelScope.launch {
             try {
                 dataLayerRepository.syncAllTodayRecords()

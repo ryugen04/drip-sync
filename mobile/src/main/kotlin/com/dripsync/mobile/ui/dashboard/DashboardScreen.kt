@@ -43,6 +43,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -78,6 +80,11 @@ fun DashboardScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     var showCustomInput by remember { mutableStateOf(false) }
+
+    // フォアグラウンド復帰時にWearと同期
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.syncWithWear()
+    }
     var customAmount by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {

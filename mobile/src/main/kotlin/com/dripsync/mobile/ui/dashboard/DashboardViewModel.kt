@@ -104,7 +104,13 @@ class DashboardViewModel @Inject constructor(
 
     init {
         loadWeeklyData()
-        // 起動時に全記録をWearに同期
+        syncWithWear()
+    }
+
+    /**
+     * Wearと同期（起動時・フォアグラウンド復帰時に呼び出し）
+     */
+    fun syncWithWear() {
         viewModelScope.launch {
             try {
                 dataLayerRepository.syncAllTodayRecords()

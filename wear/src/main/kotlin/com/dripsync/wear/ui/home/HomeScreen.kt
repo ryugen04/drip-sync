@@ -26,6 +26,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.wear.widget.ConfirmationOverlay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -69,6 +71,11 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+
+    // フォアグラウンド復帰時にMobileと同期
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.syncWithMobile()
+    }
 
     // 記録イベントを監視してConfirmationOverlayを表示
     LaunchedEffect(Unit) {
