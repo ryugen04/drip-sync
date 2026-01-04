@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.dripsync.mobile.health.HealthConnectManager
 import com.dripsync.mobile.health.HealthConnectRepository
 import com.dripsync.mobile.health.SyncResult
+import com.dripsync.mobile.reminder.ReminderScheduler
 import com.dripsync.shared.data.preferences.PresetSettings
+import com.dripsync.shared.data.preferences.ReminderSettings
 import com.dripsync.shared.data.preferences.UserPreferencesRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -26,8 +28,9 @@ enum class HealthConnectStatus {
 }
 
 data class SettingsUiState(
-    val dailyGoalMl: Int = 2000,
+    val dailyGoalMl: Int = 1500,
     val presets: PresetSettings = PresetSettings(),
+    val reminderSettings: ReminderSettings = ReminderSettings(),
     val healthConnectStatus: HealthConnectStatus = HealthConnectStatus.NOT_INSTALLED,
     val isLoading: Boolean = true
 )
@@ -42,7 +45,8 @@ sealed class SettingsEvent {
 class SettingsViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val healthConnectManager: HealthConnectManager,
-    private val healthConnectRepository: HealthConnectRepository
+    private val healthConnectRepository: HealthConnectRepository,
+    private val reminderScheduler: ReminderScheduler
 ) : ViewModel() {
 
     private val _event = MutableSharedFlow<SettingsEvent>()
@@ -52,11 +56,13 @@ class SettingsViewModel @Inject constructor(
 
     val uiState: StateFlow<SettingsUiState> = combine(
         userPreferencesRepository.observePreferences(),
+        userPreferencesRepository.observeReminderSettings(),
         _healthConnectStatus
-    ) { prefs, healthStatus ->
+    ) { prefs, reminderSettings, healthStatus ->
         SettingsUiState(
             dailyGoalMl = prefs.dailyGoalMl,
             presets = prefs.presets,
+            reminderSettings = reminderSettings,
             healthConnectStatus = healthStatus,
             isLoading = false
         )
@@ -114,6 +120,48 @@ class SettingsViewModel @Inject constructor(
                 _event.emit(SettingsEvent.SaveSuccess)
             } catch (e: Exception) {
                 _event.emit(SettingsEvent.SaveFailure)
+            }
+        }
+    }
+
+    fun toggleReminder() {
+        viewModelScope.launch {
+            val current = uiState.value.reminderSettings
+            val newSettings = current.copy(isEnabled = !current.isEnabled)
+            userPreferencesRepository.updateReminderSettings(newSettings)
+            reminderScheduler.scheduleReminder(newSettings)
+        }
+    }
+
+    fun updateReminderStartHour(hour: Int) {
+        viewModelScope.launch {
+            val current = uiState.value.reminderSettings
+            val newSettings = current.copy(startHour = hour)
+            userPreferencesRepository.updateReminderSettings(newSettings)
+            if (newSettings.isEnabled) {
+                reminderScheduler.scheduleReminder(newSettings)
+            }
+        }
+    }
+
+    fun updateReminderEndHour(hour: Int) {
+        viewModelScope.launch {
+            val current = uiState.value.reminderSettings
+            val newSettings = current.copy(endHour = hour)
+            userPreferencesRepository.updateReminderSettings(newSettings)
+            if (newSettings.isEnabled) {
+                reminderScheduler.scheduleReminder(newSettings)
+            }
+        }
+    }
+
+    fun updateReminderInterval(hours: Int) {
+        viewModelScope.launch {
+            val current = uiState.value.reminderSettings
+            val newSettings = current.copy(intervalHours = hours)
+            userPreferencesRepository.updateReminderSettings(newSettings)
+            if (newSettings.isEnabled) {
+                reminderScheduler.scheduleReminder(newSettings)
             }
         }
     }

@@ -5,6 +5,7 @@ import com.dripsync.mobile.BuildConfig
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.annotation.DrawableRes
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +24,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
@@ -31,22 +33,31 @@ import androidx.compose.material.icons.filled.Warning
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.res.painterResource
 import com.dripsync.mobile.R
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -56,6 +67,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dripsync.mobile.health.HealthConnectManager
 import com.dripsync.mobile.health.SyncResult
+import com.dripsync.shared.data.preferences.ReminderSettings
 import kotlinx.coroutines.flow.collectLatest
 
 // カラーパレット（他の画面と統一）
@@ -65,7 +77,7 @@ private val CardBackground = Color(0xFF1E293B)
 private val GrayText = Color(0xFF94A3B8)
 private val ButtonBackground = Color(0xFF374151)
 
-private val GOAL_PRESETS = listOf(1500, 2000, 2500, 3000)
+private val GOAL_PRESETS = listOf(1000, 1500, 2000, 2500)
 
 @Composable
 fun SettingsScreen(
@@ -75,6 +87,7 @@ fun SettingsScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val healthConnectManager = viewModel.getHealthConnectManager()
+    var showGoalInfoDialog by remember { mutableStateOf(false) }
 
     val permissionLauncher = rememberLauncherForActivityResult(
         contract = healthConnectManager.createPermissionRequestContract()
@@ -105,6 +118,10 @@ fun SettingsScreen(
 
     LaunchedEffect(Unit) {
         viewModel.checkHealthConnectStatus()
+    }
+
+    if (showGoalInfoDialog) {
+        GoalInfoDialog(onDismiss = { showGoalInfoDialog = false })
     }
 
     Surface(
@@ -140,10 +157,36 @@ fun SettingsScreen(
             }
 
             // Daily Goal Section
-            SectionHeader(
-                icon = rememberVectorPainter(Icons.Filled.GpsFixed),
-                title = "一日の目標"
-            )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(bottom = 16.dp)
+            ) {
+                Icon(
+                    painter = rememberVectorPainter(Icons.Filled.GpsFixed),
+                    contentDescription = null,
+                    tint = CyanBright,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                Text(
+                    text = "一日の目標",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GrayText,
+                    letterSpacing = 2.sp
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                IconButton(
+                    onClick = { showGoalInfoDialog = true },
+                    modifier = Modifier.size(24.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Info,
+                        contentDescription = "目標について",
+                        tint = GrayText,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
+            }
 
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -197,12 +240,28 @@ fun SettingsScreen(
                     Spacer(modifier = Modifier.height(16.dp))
 
                     Text(
-                        text = "一般的な成人の1日の水分摂取推奨量は2000mLです。",
+                        text = "飲料水として1日1.2〜1.5L程度の摂取が推奨されています。",
                         style = MaterialTheme.typography.bodySmall,
                         color = GrayText
                     )
                 }
             }
+
+            Spacer(modifier = Modifier.height(32.dp))
+
+            // Reminder Section
+            SectionHeader(
+                icon = rememberVectorPainter(Icons.Filled.Notifications),
+                title = "リマインダー"
+            )
+
+            ReminderSettingsCard(
+                settings = uiState.reminderSettings,
+                onToggle = { viewModel.toggleReminder() },
+                onStartHourChange = { viewModel.updateReminderStartHour(it) },
+                onEndHourChange = { viewModel.updateReminderEndHour(it) },
+                onIntervalChange = { viewModel.updateReminderInterval(it) }
+            )
 
             Spacer(modifier = Modifier.height(32.dp))
 
@@ -319,6 +378,223 @@ fun SettingsScreen(
             }
 
             Spacer(modifier = Modifier.height(32.dp))
+        }
+    }
+}
+
+@Composable
+private fun GoalInfoDialog(onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = CardBackground,
+        title = {
+            Text(
+                text = "推奨水分摂取量について",
+                color = Color.White,
+                fontWeight = FontWeight.Bold
+            )
+        },
+        text = {
+            Text(
+                text = """厚生労働省の「健康のため水を飲もう」推進運動によると、成人が1日に必要な水分量は約2.5Lです。
+
+このうち食事から約1L、体内で生成される水分が約0.3Lとされており、飲料水として約1.2L〜1.5Lの摂取が推奨されています。
+
+1回100〜200mLをこまめに摂取するのが基本で、起床直後と入浴前後の水分補給が特に重要です。
+
+個人の体格や活動量、気温などによって必要量は変わりますので、ご自身の状況に合わせて目標を調整してください。""",
+                color = GrayText,
+                style = MaterialTheme.typography.bodyMedium,
+                lineHeight = 22.sp
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text("閉じる", color = CyanBright)
+            }
+        }
+    )
+}
+
+@Composable
+private fun ReminderSettingsCard(
+    settings: ReminderSettings,
+    onToggle: () -> Unit,
+    onStartHourChange: (Int) -> Unit,
+    onEndHourChange: (Int) -> Unit,
+    onIntervalChange: (Int) -> Unit
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = CardBackground),
+        shape = RoundedCornerShape(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(20.dp)
+        ) {
+            // オン/オフ切り替え
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "リマインダー通知",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = Color.White
+                )
+                Switch(
+                    checked = settings.isEnabled,
+                    onCheckedChange = { onToggle() },
+                    colors = SwitchDefaults.colors(
+                        checkedThumbColor = CyanBright,
+                        checkedTrackColor = CyanBright.copy(alpha = 0.5f),
+                        uncheckedThumbColor = GrayText,
+                        uncheckedTrackColor = ButtonBackground
+                    )
+                )
+            }
+
+            if (settings.isEnabled) {
+                Spacer(modifier = Modifier.height(16.dp))
+
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(1.dp)
+                        .background(GrayText.copy(alpha = 0.3f))
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 時間範囲
+                Text(
+                    text = "通知時間",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GrayText
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    TimeSelector(
+                        label = "開始",
+                        hour = settings.startHour,
+                        onHourChange = onStartHourChange,
+                        modifier = Modifier.weight(1f)
+                    )
+                    Text(
+                        text = "〜",
+                        color = GrayText,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    )
+                    TimeSelector(
+                        label = "終了",
+                        hour = settings.endHour,
+                        onHourChange = onEndHourChange,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
+                // 通知間隔
+                Text(
+                    text = "通知間隔",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = GrayText
+                )
+                Spacer(modifier = Modifier.height(8.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    ReminderSettings.INTERVAL_OPTIONS.forEach { interval ->
+                        Button(
+                            onClick = { onIntervalChange(interval) },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = if (settings.intervalHours == interval) CyanBright else ButtonBackground,
+                                contentColor = if (settings.intervalHours == interval) Color.Black else GrayText
+                            ),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = "${interval}時間",
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = if (settings.isEnabled) {
+                    "目標未達成の場合、${settings.startHour}時〜${settings.endHour}時の間、${settings.intervalHours}時間ごとに通知します。"
+                } else {
+                    "リマインダーを有効にすると、目標未達成時に通知でお知らせします。"
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = GrayText
+            )
+        }
+    }
+}
+
+@Composable
+private fun TimeSelector(
+    label: String,
+    hour: Int,
+    onHourChange: (Int) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(8.dp))
+            .background(ButtonBackground)
+            .padding(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        FilledIconButton(
+            onClick = { if (hour > 0) onHourChange(hour - 1) },
+            modifier = Modifier.size(28.dp),
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = CardBackground
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Remove,
+                contentDescription = "減らす",
+                tint = GrayText,
+                modifier = Modifier.size(14.dp)
+            )
+        }
+
+        Text(
+            text = "${hour}:00",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Color.White,
+            modifier = Modifier.padding(horizontal = 8.dp)
+        )
+
+        FilledIconButton(
+            onClick = { if (hour < 23) onHourChange(hour + 1) },
+            modifier = Modifier.size(28.dp),
+            colors = IconButtonDefaults.filledIconButtonColors(
+                containerColor = CardBackground
+            )
+        ) {
+            Icon(
+                imageVector = Icons.Filled.Add,
+                contentDescription = "増やす",
+                tint = GrayText,
+                modifier = Modifier.size(14.dp)
+            )
         }
     }
 }

@@ -9,6 +9,9 @@
     <!-- Wear OS 連携用 -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <!-- 通知権限（Android 13以降） -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <application
         android:name=".DripSyncApplication"
         android:allowBackup="true"

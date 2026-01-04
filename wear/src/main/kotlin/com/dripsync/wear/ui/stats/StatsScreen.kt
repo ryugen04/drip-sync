@@ -2,7 +2,6 @@ package com.dripsync.wear.ui.stats
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -33,6 +30,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.material.Text
+import com.dripsync.shared.domain.model.HourlyHydrationPoint
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 // カラーパレット（HomeScreenと共通）
@@ -40,7 +39,7 @@ private val CyanBright = Color(0xFF00E5FF)
 private val BluePurple = Color(0xFF7C4DFF)
 private val BackgroundDark = Color(0xFF0D1520)
 private val TextGray = Color(0xFF5A6678)
-private val GoalLineColor = Color(0xFF4A5568)
+private val IdealLineColor = Color(0xFF4A5568)
 
 @Composable
 fun StatsScreen(
@@ -48,7 +47,6 @@ fun StatsScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // 画面表示時に最新データを取得
     LaunchedEffect(Unit) {
         viewModel.refreshStats()
     }
@@ -62,7 +60,7 @@ fun StatsScreen(
     ) {
         // タイトル
         Text(
-            text = "Stats",
+            text = "Today",
             color = CyanBright,
             fontSize = 12.sp,
             fontWeight = FontWeight.Medium
@@ -70,22 +68,32 @@ fun StatsScreen(
 
         Spacer(modifier = Modifier.height(2.dp))
 
-        // サブタイトル
-        Text(
-            text = "Last 7 days",
-            color = TextGray,
-            fontSize = 9.sp
-        )
+        // サブタイトル（現在の累計）
+        Row(
+            verticalAlignment = Alignment.Bottom
+        ) {
+            Text(
+                text = "${uiState.todayTotalMl}",
+                color = Color.White,
+                fontSize = 14.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = " / ${uiState.dailyGoalMl}ml",
+                color = TextGray,
+                fontSize = 9.sp
+            )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // 線グラフ
-        LineChart(
-            data = uiState.dailyData,
+        // 累積グラフ
+        DailyCumulativeChart(
+            data = uiState.hourlyData,
             goalMl = uiState.dailyGoalMl,
             modifier = Modifier
                 .weight(1f)
-                .padding(horizontal = 16.dp)
+                .padding(horizontal = 12.dp)
         )
 
         Spacer(modifier = Modifier.height(14.dp))
@@ -93,8 +101,8 @@ fun StatsScreen(
 }
 
 @Composable
-private fun LineChart(
-    data: List<DailyData>,
+private fun DailyCumulativeChart(
+    data: List<HourlyHydrationPoint>,
     goalMl: Int,
     modifier: Modifier = Modifier
 ) {
@@ -105,16 +113,8 @@ private fun LineChart(
         return
     }
 
-    val scrollState = rememberScrollState()
-    val dateFormatter = DateTimeFormatter.ofPattern("d")
-
-    // 初期位置を右端（最新）に設定
-    LaunchedEffect(data.size) {
-        scrollState.scrollTo(scrollState.maxValue)
-    }
-
-    val pointSpacing = 36.dp
-    val chartWidth = pointSpacing * (data.size - 1).coerceAtLeast(1)
+    val timeFormatter = DateTimeFormatter.ofPattern("H")
+    val now = LocalTime.now()
 
     Row(modifier = modifier) {
         // Y軸ラベル
@@ -125,13 +125,13 @@ private fun LineChart(
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "${goalMl * 2 / 1000}L",
+                text = "${goalMl / 1000f}L",
                 color = TextGray,
                 fontSize = 7.sp
             )
             Text(
-                text = "${goalMl / 1000}L",
-                color = GoalLineColor,
+                text = "${goalMl / 2000f}L",
+                color = TextGray,
                 fontSize = 7.sp
             )
             Text(
@@ -141,116 +141,134 @@ private fun LineChart(
             )
         }
 
-        // グラフ + 日付ラベル（一緒にスクロール）
-        Box(
+        // グラフエリア
+        Column(
             modifier = Modifier
                 .weight(1f)
                 .fillMaxHeight()
-                .horizontalScroll(scrollState)
         ) {
-            Column(
-                modifier = Modifier.width(chartWidth)
+            Canvas(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
             ) {
-                // グラフエリア
-                Canvas(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxWidth()
-                ) {
-                    val maxValue = (goalMl * 2).toFloat()
-                    val chartHeight = size.height
-                    val chartWidthPx = size.width
+                val chartHeight = size.height
+                val chartWidth = size.width
+                val maxValue = goalMl.toFloat()
 
-                    // 目標ライン（破線）
-                    val goalY = chartHeight - (goalMl.toFloat() / maxValue * chartHeight)
-                    drawLine(
-                        color = GoalLineColor,
-                        start = Offset(0f, goalY),
-                        end = Offset(chartWidthPx, goalY),
-                        strokeWidth = 1.dp.toPx(),
-                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(8f, 8f))
-                    )
+                // 現在時刻までのインデックスを計算
+                val currentPointIndex = data.indexOfLast { !it.time.isAfter(now) }
+                    .coerceAtLeast(0)
 
-                    // データポイントを計算
-                    val points = data.mapIndexed { index, dayData ->
-                        val x = if (data.size > 1) {
-                            index * (chartWidthPx / (data.size - 1))
-                        } else {
-                            chartWidthPx / 2
-                        }
-                        val y = chartHeight - (dayData.amountMl.toFloat() / maxValue * chartHeight)
-                            .coerceIn(0f, chartHeight)
-                        Offset(x, y)
+                // 理想カーブ（破線）を描画
+                val idealPoints = data.mapIndexed { index, point ->
+                    val x = if (data.size > 1) {
+                        index * (chartWidth / (data.size - 1))
+                    } else {
+                        chartWidth / 2
                     }
-
-                    // グラデーション塗りつぶし
-                    if (points.size >= 2) {
-                        val fillPath = Path().apply {
-                            moveTo(points.first().x, chartHeight)
-                            points.forEach { lineTo(it.x, it.y) }
-                            lineTo(points.last().x, chartHeight)
-                            close()
-                        }
-                        drawPath(
-                            path = fillPath,
-                            brush = Brush.verticalGradient(
-                                colors = listOf(
-                                    CyanBright.copy(alpha = 0.3f),
-                                    BluePurple.copy(alpha = 0.1f)
-                                )
-                            )
-                        )
-                    }
-
-                    // 線を描画
-                    if (points.size >= 2) {
-                        val linePath = Path().apply {
-                            moveTo(points.first().x, points.first().y)
-                            for (i in 1 until points.size) {
-                                lineTo(points[i].x, points[i].y)
-                            }
-                        }
-                        drawPath(
-                            path = linePath,
-                            brush = Brush.horizontalGradient(
-                                colors = listOf(BluePurple, CyanBright)
-                            ),
-                            style = Stroke(
-                                width = 2.dp.toPx(),
-                                cap = StrokeCap.Round
-                            )
-                        )
-                    }
-
-                    // ポイントを描画
-                    points.forEach { point ->
-                        drawCircle(
-                            color = CyanBright,
-                            radius = 4.dp.toPx(),
-                            center = point
-                        )
-                        drawCircle(
-                            color = BackgroundDark,
-                            radius = 2.dp.toPx(),
-                            center = point
-                        )
-                    }
+                    val y = chartHeight - (point.idealCumulative.toFloat() / maxValue * chartHeight)
+                        .coerceIn(0f, chartHeight)
+                    Offset(x, y)
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                // 日付ラベル
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween
-                ) {
-                    data.forEach { dayData ->
-                        Text(
-                            text = dayData.date.format(dateFormatter),
-                            color = TextGray,
-                            fontSize = 9.sp
-                        )
+                if (idealPoints.size >= 2) {
+                    val idealPath = Path().apply {
+                        moveTo(idealPoints.first().x, idealPoints.first().y)
+                        for (i in 1 until idealPoints.size) {
+                            lineTo(idealPoints[i].x, idealPoints[i].y)
+                        }
                     }
+                    drawPath(
+                        path = idealPath,
+                        color = IdealLineColor,
+                        style = Stroke(
+                            width = 1.5.dp.toPx(),
+                            cap = StrokeCap.Round,
+                            pathEffect = PathEffect.dashPathEffect(floatArrayOf(6f, 6f))
+                        )
+                    )
+                }
+
+                // 実績カーブ（現在時刻まで）を描画
+                val actualPoints = data.take(currentPointIndex + 1).mapIndexed { index, point ->
+                    val x = if (data.size > 1) {
+                        index * (chartWidth / (data.size - 1))
+                    } else {
+                        chartWidth / 2
+                    }
+                    val y = chartHeight - (point.actualCumulative.toFloat() / maxValue * chartHeight)
+                        .coerceIn(0f, chartHeight)
+                    Offset(x, y)
+                }
+
+                // グラデーション塗りつぶし
+                if (actualPoints.size >= 2) {
+                    val fillPath = Path().apply {
+                        moveTo(actualPoints.first().x, chartHeight)
+                        actualPoints.forEach { lineTo(it.x, it.y) }
+                        lineTo(actualPoints.last().x, chartHeight)
+                        close()
+                    }
+                    drawPath(
+                        path = fillPath,
+                        brush = Brush.verticalGradient(
+                            colors = listOf(
+                                CyanBright.copy(alpha = 0.3f),
+                                BluePurple.copy(alpha = 0.1f)
+                            )
+                        )
+                    )
+
+                    // 実績線
+                    val linePath = Path().apply {
+                        moveTo(actualPoints.first().x, actualPoints.first().y)
+                        for (i in 1 until actualPoints.size) {
+                            lineTo(actualPoints[i].x, actualPoints[i].y)
+                        }
+                    }
+                    drawPath(
+                        path = linePath,
+                        brush = Brush.horizontalGradient(
+                            colors = listOf(BluePurple, CyanBright)
+                        ),
+                        style = Stroke(
+                            width = 2.dp.toPx(),
+                            cap = StrokeCap.Round
+                        )
+                    )
+                }
+
+                // 現在位置のポイント
+                if (actualPoints.isNotEmpty()) {
+                    val currentPoint = actualPoints.last()
+                    drawCircle(
+                        color = CyanBright,
+                        radius = 4.dp.toPx(),
+                        center = currentPoint
+                    )
+                    drawCircle(
+                        color = BackgroundDark,
+                        radius = 2.dp.toPx(),
+                        center = currentPoint
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            // 時刻ラベル
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // 6時、12時、18時、22時のラベルを表示
+                listOf(6, 12, 18, 22).forEach { hour ->
+                    Text(
+                        text = hour.toString(),
+                        color = TextGray,
+                        fontSize = 8.sp
+                    )
                 }
             }
         }

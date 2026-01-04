@@ -4,47 +4,33 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dripsync.shared.data.preferences.UserPreferencesRepository
 import com.dripsync.shared.data.repository.HydrationRepository
+import com.dripsync.shared.domain.model.HourlyHydrationPoint
+import com.dripsync.shared.domain.model.IdealHydrationSchedule
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import java.time.DayOfWeek
 import java.time.LocalDate
-import java.time.temporal.TemporalAdjusters
+import java.time.LocalTime
+import java.time.ZoneId
 import javax.inject.Inject
 
-data class DailyData(
-    val date: LocalDate,
-    val amountMl: Int,
-    val goalMl: Int
-) {
-    val progressRatio: Float
-        get() = if (goalMl > 0) (amountMl.toFloat() / goalMl).coerceAtMost(1f) else 0f
-}
-
-data class WeeklyData(
-    val weekStartDate: LocalDate,
-    val totalAmountMl: Int,
-    val averageAmountMl: Int,
-    val goalMl: Int
-) {
-    val progressRatio: Float
-        get() = if (goalMl > 0) (averageAmountMl.toFloat() / goalMl).coerceAtMost(1f) else 0f
-}
-
-enum class StatsTab {
-    DAILY, WEEKLY
-}
-
 data class StatsUiState(
-    val selectedTab: StatsTab = StatsTab.DAILY,
-    val dailyData: List<DailyData> = emptyList(),
-    val weeklyData: List<WeeklyData> = emptyList(),
-    val dailyGoalMl: Int = 2000,
+    val hourlyData: List<HourlyHydrationPoint> = emptyList(),
+    val dailyGoalMl: Int = 1500,
+    val todayTotalMl: Int = 0,
     val isLoading: Boolean = true
-)
+) {
+    val progressPercent: Int
+        get() = if (dailyGoalMl > 0) {
+            ((todayTotalMl.toFloat() / dailyGoalMl) * 100).toInt().coerceAtMost(100)
+        } else 0
+
+    val isGoalAchieved: Boolean
+        get() = todayTotalMl >= dailyGoalMl
+}
 
 @HiltViewModel
 class StatsViewModel @Inject constructor(
@@ -59,51 +45,71 @@ class StatsViewModel @Inject constructor(
         refreshStats()
     }
 
-    fun selectTab(tab: StatsTab) {
-        _uiState.value = _uiState.value.copy(selectedTab = tab)
-    }
-
-    // 画面表示時に呼び出して最新データを取得
     fun refreshStats() {
         viewModelScope.launch {
             val dailyGoal = userPreferencesRepository.observeDailyGoal().first()
             val today = LocalDate.now()
+            val records = hydrationRepository.getRecordsByDateRange(today, today)
+            val todayTotal = records.sumOf { it.amountMl }
 
-            // 過去7日間の日別データ
-            val dailyData = (0 until 7).map { daysAgo ->
-                val date = today.minusDays(daysAgo.toLong())
-                val records = hydrationRepository.getRecordsByDateRange(date, date)
-                val totalMl = records.sumOf { it.amountMl }
-                DailyData(
-                    date = date,
-                    amountMl = totalMl,
-                    goalMl = dailyGoal
-                )
-            }.reversed()
-
-            // 過去4週間の週別データ
-            val weeklyData = (0 until 4).map { weeksAgo ->
-                val weekEnd = today.minusWeeks(weeksAgo.toLong())
-                    .with(TemporalAdjusters.previousOrSame(DayOfWeek.SUNDAY))
-                val weekStart = weekEnd.minusDays(6)
-                val records = hydrationRepository.getRecordsByDateRange(weekStart, weekEnd)
-                val totalMl = records.sumOf { it.amountMl }
-                val daysWithRecords = records.groupBy { it.recordedDate }.size.coerceAtLeast(1)
-                WeeklyData(
-                    weekStartDate = weekStart,
-                    totalAmountMl = totalMl,
-                    averageAmountMl = totalMl / 7,
-                    goalMl = dailyGoal
-                )
-            }.reversed()
+            // 時間帯ごとの累積データを計算
+            val hourlyData = calculateHourlyData(records, dailyGoal)
 
             _uiState.value = StatsUiState(
-                selectedTab = _uiState.value.selectedTab,
-                dailyData = dailyData,
-                weeklyData = weeklyData,
+                hourlyData = hourlyData,
                 dailyGoalMl = dailyGoal,
+                todayTotalMl = todayTotal,
                 isLoading = false
             )
         }
+    }
+
+    private fun calculateHourlyData(
+        records: List<com.dripsync.shared.domain.model.Hydration>,
+        goalMl: Int
+    ): List<HourlyHydrationPoint> {
+        val zoneId = ZoneId.systemDefault()
+        val now = LocalTime.now()
+        val points = mutableListOf<HourlyHydrationPoint>()
+
+        // 30分間隔でポイントを生成（6:00〜22:00）
+        var currentTime = IdealHydrationSchedule.startTime
+        var cumulativeActual = 0
+
+        // 各記録の時刻と量を取得
+        val recordsByTime = records.map { record ->
+            val time = record.recordedAt.atZone(zoneId).toLocalTime()
+            Pair(time, record.amountMl)
+        }.sortedBy { it.first }
+
+        while (!currentTime.isAfter(IdealHydrationSchedule.endTime)) {
+            // この時刻までの累積実績を計算
+            cumulativeActual = recordsByTime
+                .filter { !it.first.isAfter(currentTime) }
+                .sumOf { it.second }
+
+            val idealAmount = IdealHydrationSchedule.getIdealAmountAt(currentTime, goalMl)
+
+            points.add(
+                HourlyHydrationPoint(
+                    time = currentTime,
+                    actualCumulative = cumulativeActual,
+                    idealCumulative = idealAmount
+                )
+            )
+
+            currentTime = currentTime.plusMinutes(30)
+        }
+
+        // 現在時刻以降のポイントは実績を現在値で固定
+        val currentPoints = points.map { point ->
+            if (point.time.isAfter(now)) {
+                point.copy(actualCumulative = points.lastOrNull { !it.time.isAfter(now) }?.actualCumulative ?: 0)
+            } else {
+                point
+            }
+        }
+
+        return currentPoints
     }
 }
