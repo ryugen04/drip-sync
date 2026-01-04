@@ -8,8 +8,16 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.dripsync.mobile.reminder.ReminderNotificationHelper
+import com.dripsync.mobile.reminder.ReminderScheduler
 import com.dripsync.mobile.sync.SyncWorker
+import com.dripsync.shared.data.preferences.UserPreferencesRepository
 import dagger.hilt.android.HiltAndroidApp
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 
@@ -19,6 +27,17 @@ class DripSyncApplication : Application(), Configuration.Provider {
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
 
+    @Inject
+    lateinit var notificationHelper: ReminderNotificationHelper
+
+    @Inject
+    lateinit var reminderScheduler: ReminderScheduler
+
+    @Inject
+    lateinit var userPreferencesRepository: UserPreferencesRepository
+
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
@@ -27,6 +46,7 @@ class DripSyncApplication : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         scheduleSyncWorker()
+        setupReminder()
     }
 
     private fun scheduleSyncWorker() {
@@ -35,7 +55,7 @@ class DripSyncApplication : Application(), Configuration.Provider {
             .build()
 
         val syncRequest = PeriodicWorkRequestBuilder<SyncWorker>(
-            15, TimeUnit.MINUTES  // 最短15分間隔
+            15, TimeUnit.MINUTES
         )
             .setConstraints(constraints)
             .build()
@@ -45,5 +65,16 @@ class DripSyncApplication : Application(), Configuration.Provider {
             ExistingPeriodicWorkPolicy.KEEP,
             syncRequest
         )
+    }
+
+    private fun setupReminder() {
+        // 通知チャンネルを作成
+        notificationHelper.createNotificationChannel()
+
+        // 保存されているリマインダー設定に基づいてスケジュール
+        applicationScope.launch {
+            val settings = userPreferencesRepository.observeReminderSettings().first()
+            reminderScheduler.scheduleReminder(settings)
+        }
     }
 }
