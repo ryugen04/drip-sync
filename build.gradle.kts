@@ -13,3 +13,12 @@ subprojects {
         maxParallelForks = (Runtime.getRuntime().availableProcessors() / 2).coerceAtLeast(1)
     }
 }
+
+tasks.register<Exec>("setupGitHooks") {
+    description = "Setup git hooks for pre-push testing"
+    group = "setup"
+    commandLine("git", "config", "core.hooksPath", ".githooks")
+    doLast {
+        println("Git hooks configured: .githooks/pre-push")
+    }
+}
