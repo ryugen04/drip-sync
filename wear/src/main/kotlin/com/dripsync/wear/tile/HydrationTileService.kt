@@ -418,7 +418,7 @@ class HydrationTileService : SuspendingTileService() {
     }
 
     // HomeScreenと同じグラデーション
-    // 0度=12時から時計回りに CyanBright → CyanMid → BluePurple
+    // Arcは0度=12時から開始、SweepGradientは3時から開始するため-90度シフト
     private fun createProgressGradient(): ColorBuilders.Brush {
         return ColorBuilders.SweepGradient.Builder(
             ColorBuilders.ColorStop.Builder(
@@ -441,6 +441,8 @@ class HydrationTileService : SuspendingTileService() {
                 argb(COLOR_CYAN_BRIGHT),
                 TypeBuilders.FloatProp.Builder(1.0f).build()
             ).build()
-        ).build()
+        )
+            .setAngularShift(DimensionBuilders.DegreesProp.Builder(-90f).build())
+            .build()
     }
 }
