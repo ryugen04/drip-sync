@@ -142,8 +142,8 @@ mobile と wear で個別にバージョン管理されている。変更があ�
 
 | モジュール | ファイル | 現在の値 |
 |-----------|---------|---------|
-| mobile | `mobile/build.gradle.kts` | versionCode: 7, versionName: "1.0.1" |
-| wear | `wear/build.gradle.kts` | versionCode: 8, versionName: "1.0.1" |
+| mobile | `mobile/build.gradle.kts` | versionCode: 8, versionName: "1.0.2" |
+| wear | `wear/build.gradle.kts` | versionCode: 9, versionName: "1.0.2" |
 
 **ルール:**
 - `versionCode`: 必ずインクリメント（Play Store要件）
