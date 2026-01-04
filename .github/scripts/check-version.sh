@@ -3,6 +3,7 @@ set -e
 
 # バージョンチェックスクリプト
 # PRでモジュールに変更がある場合、versionCodeがインクリメントされているかチェック
+# 同一applicationIdのため、versionCodeは全モジュール・全履歴でユニークである必要がある
 
 BASE_BRANCH="${1:-main}"
 
@@ -10,6 +11,12 @@ BASE_BRANCH="${1:-main}"
 extract_version_code() {
     local file="$1"
     grep -E "versionCode\s*=" "$file" | sed -E 's/.*versionCode\s*=\s*([0-9]+).*/\1/'
+}
+
+# ベースブランチのversionCodeを抽出する関数
+extract_base_version_code() {
+    local file="$1"
+    git show "origin/${BASE_BRANCH}:${file}" 2>/dev/null | grep -E "versionCode\s*=" | sed -E 's/.*versionCode\s*=\s*([0-9]+).*/\1/' || echo "0"
 }
 
 # 変更されたファイルを取得
@@ -62,52 +69,77 @@ main() {
     fi
 
     echo ""
+
+    # 現在のversionCodeを取得
+    local current_mobile_version
+    local current_wear_version
+    current_mobile_version=$(extract_version_code "mobile/build.gradle.kts")
+    current_wear_version=$(extract_version_code "wear/build.gradle.kts")
+
+    # ベースブランチのversionCodeを取得
+    local base_mobile_version
+    local base_wear_version
+    base_mobile_version=$(extract_base_version_code "mobile/build.gradle.kts")
+    base_wear_version=$(extract_base_version_code "wear/build.gradle.kts")
+
+    # 過去の最大versionCodeを算出（mobile/wearのうち大きい方）
+    local max_base_version
+    if [ "$base_mobile_version" -gt "$base_wear_version" ]; then
+        max_base_version=$base_mobile_version
+    else
+        max_base_version=$base_wear_version
+    fi
+
+    echo "Base branch versions:"
+    echo "  mobile: ${base_mobile_version}"
+    echo "  wear: ${base_wear_version}"
+    echo "  max: ${max_base_version}"
+    echo ""
+    echo "Current versions:"
+    echo "  mobile: ${current_mobile_version}"
+    echo "  wear: ${current_wear_version}"
+    echo ""
+
     local failed=false
 
-    # mobileのバージョンチェック
+    # mobileのバージョンチェック（過去最大より大きいか）
     if $check_mobile; then
         echo "Checking mobile version..."
-        local current_version
-        local base_version
-
-        current_version=$(extract_version_code "mobile/build.gradle.kts")
-        base_version=$(git show "origin/${BASE_BRANCH}:mobile/build.gradle.kts" 2>/dev/null | grep -E "versionCode\s*=" | sed -E 's/.*versionCode\s*=\s*([0-9]+).*/\1/' || echo "0")
-
-        echo "  Base version: ${base_version}"
-        echo "  Current version: ${current_version}"
-
-        if [ "$current_version" -le "$base_version" ]; then
-            echo "  ERROR: mobile versionCode must be incremented (current: ${current_version}, base: ${base_version})"
+        if [ "$current_mobile_version" -le "$max_base_version" ]; then
+            echo "  ERROR: mobile versionCode (${current_mobile_version}) must be greater than max base version (${max_base_version})"
             failed=true
         else
-            echo "  OK: mobile versionCode incremented"
+            echo "  OK: mobile versionCode > max base version"
         fi
     fi
 
-    # wearのバージョンチェック
+    # wearのバージョンチェック（過去最大より大きいか）
     if $check_wear; then
         echo "Checking wear version..."
-        local current_version
-        local base_version
-
-        current_version=$(extract_version_code "wear/build.gradle.kts")
-        base_version=$(git show "origin/${BASE_BRANCH}:wear/build.gradle.kts" 2>/dev/null | grep -E "versionCode\s*=" | sed -E 's/.*versionCode\s*=\s*([0-9]+).*/\1/' || echo "0")
-
-        echo "  Base version: ${base_version}"
-        echo "  Current version: ${current_version}"
-
-        if [ "$current_version" -le "$base_version" ]; then
-            echo "  ERROR: wear versionCode must be incremented (current: ${current_version}, base: ${base_version})"
+        if [ "$current_wear_version" -le "$max_base_version" ]; then
+            echo "  ERROR: wear versionCode (${current_wear_version}) must be greater than max base version (${max_base_version})"
             failed=true
         else
-            echo "  OK: wear versionCode incremented"
+            echo "  OK: wear versionCode > max base version"
         fi
+    fi
+
+    # mobile/wear間の重複チェック
+    echo "Checking version uniqueness..."
+    if [ "$current_mobile_version" -eq "$current_wear_version" ]; then
+        echo "  ERROR: mobile and wear have the same versionCode (${current_mobile_version})"
+        failed=true
+    else
+        echo "  OK: mobile and wear have different versionCodes"
     fi
 
     echo ""
     if $failed; then
         echo "Version check FAILED"
-        echo "Please increment versionCode in the affected module(s) build.gradle.kts"
+        echo ""
+        echo "Rules:"
+        echo "  1. versionCode must be greater than max of previous mobile/wear versions"
+        echo "  2. mobile and wear must have different versionCodes"
         exit 1
     else
         echo "Version check PASSED"
