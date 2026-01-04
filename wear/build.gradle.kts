@@ -28,8 +28,8 @@ android {
         applicationId = "com.dripsync"
         minSdk = libs.versions.minSdkWear.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 16
-        versionName = "1.0.5"
+        versionCode = 18
+        versionName = "1.0.6"
     }
 
     signingConfigs {

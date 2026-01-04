@@ -28,8 +28,8 @@ android {
         applicationId = "com.dripsync"
         minSdk = libs.versions.minSdk.get().toInt()
         targetSdk = libs.versions.targetSdk.get().toInt()
-        versionCode = 15
-        versionName = "1.0.5"
+        versionCode = 17
+        versionName = "1.0.6"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
