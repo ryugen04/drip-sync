@@ -86,6 +86,7 @@ class DataLayerRepository @Inject constructor(
             dataMap.putInt(DataLayerPaths.KEY_PRESET_1, preferences.presets.preset1Ml)
             dataMap.putInt(DataLayerPaths.KEY_PRESET_2, preferences.presets.preset2Ml)
             dataMap.putInt(DataLayerPaths.KEY_PRESET_3, preferences.presets.preset3Ml)
+            dataMap.putString(DataLayerPaths.KEY_SOURCE_DEVICE, SourceDevice.MOBILE.name)
             // タイムスタンプを追加して変更を検知させる
             dataMap.putLong("timestamp", System.currentTimeMillis())
         }.asPutDataRequest().setUrgent()
@@ -140,6 +141,10 @@ class DataLayerRepository @Inject constructor(
         if (eventInfo.path != DataLayerPaths.PREFERENCES_PATH) return
 
         val dataMap = DataMapItem.fromDataItem(eventInfo.dataItem).dataMap
+
+        // 自分自身が送信したデータは無視
+        val sourceDevice = dataMap.getString(DataLayerPaths.KEY_SOURCE_DEVICE)
+        if (sourceDevice == SourceDevice.MOBILE.name) return
 
         val dailyGoalMl = dataMap.getInt(DataLayerPaths.KEY_DAILY_GOAL_ML)
         val preset1 = dataMap.getInt(DataLayerPaths.KEY_PRESET_1)
