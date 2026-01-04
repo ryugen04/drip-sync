@@ -44,7 +44,7 @@ class HealthConnectRepository @Inject constructor(
                 val response = client.insertRecords(listOf(healthConnectRecord))
 
                 if (response.recordIdsList.isNotEmpty()) {
-                    val healthConnectId = response.recordIdsList.first()
+                    val healthConnectId = response.recordIdsList.first().id
                     hydrationRepository.markAsSynced(record.id, healthConnectId)
                     syncedCount++
                 }

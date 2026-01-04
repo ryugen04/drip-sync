@@ -172,7 +172,7 @@ class HydrationTileService : SuspendingTileService() {
             // 外周プログレスリング（プログレス）- 12時から時計回り、グラデーション
             .addContent(
                 Arc.Builder()
-                    .setAnchorAngle(degrees(0f))
+                    .setAnchorAngle(degrees(-90f))
                     .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_START)
                     .addContent(
                         ArcLine.Builder()
@@ -368,7 +368,7 @@ class HydrationTileService : SuspendingTileService() {
                     // プログレスリング（プログレス）- 12時から開始
                     .addContent(
                         Arc.Builder()
-                            .setAnchorAngle(degrees(0f))
+                            .setAnchorAngle(degrees(-90f))
                             .setAnchorType(LayoutElementBuilders.ARC_ANCHOR_START)
                             .addContent(
                                 ArcLine.Builder()

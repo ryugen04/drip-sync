@@ -116,13 +116,15 @@ class DataLayerRepository @Inject constructor(
             SourceDevice.MOBILE
         }
 
-        // 既存の記録がなければ追加
+        // 既存の記録がなければ追加（同じrecordIdとrecordedAtを使用）
         val existing = hydrationRepository.getRecordById(recordId)
         if (existing == null) {
             hydrationRepository.recordHydration(
                 amountMl = amountMl,
                 beverageType = beverageType,
-                sourceDevice = sourceDevice
+                sourceDevice = sourceDevice,
+                recordId = recordId,
+                recordedAt = recordedAt
             )
         }
     }

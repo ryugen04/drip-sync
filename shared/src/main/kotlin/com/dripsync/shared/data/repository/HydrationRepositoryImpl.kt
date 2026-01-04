@@ -10,6 +10,7 @@ import com.dripsync.shared.util.DateTimeUtils
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
+import java.time.Instant
 import java.time.LocalDate
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -30,12 +31,16 @@ class HydrationRepositoryImpl @Inject constructor(
     override suspend fun recordHydration(
         amountMl: Int,
         beverageType: BeverageType,
-        sourceDevice: SourceDevice
+        sourceDevice: SourceDevice,
+        recordId: String?,
+        recordedAt: Instant?
     ): String {
         val record = HydrationRecord(
+            id = recordId ?: java.util.UUID.randomUUID().toString(),
             amountMl = amountMl,
             beverageType = beverageType,
-            sourceDevice = sourceDevice
+            sourceDevice = sourceDevice,
+            recordedAt = recordedAt ?: Instant.now()
         )
         hydrationDao.insert(record)
         return record.id

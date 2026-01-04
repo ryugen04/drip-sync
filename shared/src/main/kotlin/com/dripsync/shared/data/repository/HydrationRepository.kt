@@ -6,6 +6,7 @@ import com.dripsync.shared.data.model.SourceDevice
 import com.dripsync.shared.domain.model.DailyHydrationSummary
 import com.dripsync.shared.domain.model.Hydration
 import kotlinx.coroutines.flow.Flow
+import java.time.Instant
 import java.time.LocalDate
 
 interface HydrationRepository {
@@ -15,7 +16,9 @@ interface HydrationRepository {
     suspend fun recordHydration(
         amountMl: Int,
         beverageType: BeverageType = BeverageType.WATER,
-        sourceDevice: SourceDevice = SourceDevice.UNKNOWN
+        sourceDevice: SourceDevice = SourceDevice.UNKNOWN,
+        recordId: String? = null,
+        recordedAt: Instant? = null
     ): String
 
     suspend fun updateRecord(record: HydrationRecord)
