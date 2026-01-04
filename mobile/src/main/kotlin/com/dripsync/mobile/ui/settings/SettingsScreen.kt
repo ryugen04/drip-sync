@@ -64,6 +64,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dripsync.mobile.health.HealthConnectManager
 import com.dripsync.mobile.health.SyncResult
@@ -118,6 +120,10 @@ fun SettingsScreen(
 
     LaunchedEffect(Unit) {
         viewModel.checkHealthConnectStatus()
+    }
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.syncWithWear()
     }
 
     if (showGoalInfoDialog) {
@@ -229,7 +235,7 @@ fun SettingsScreen(
                                 shape = RoundedCornerShape(8.dp)
                             ) {
                                 Text(
-                                    text = "$preset",
+                                    text = "${preset / 1000f}L",
                                     style = MaterialTheme.typography.bodySmall,
                                     maxLines = 1
                                 )
@@ -277,7 +283,7 @@ fun SettingsScreen(
                 PresetItem(
                     label = "プリセット 1",
                     amountMl = uiState.presets.preset1Ml,
-                    iconRes = getIconResForAmount(uiState.presets.preset1Ml),
+                    iconRes = R.drawable.ic_coffee,
                     onDecrease = { viewModel.updatePreset(0, maxOf(50, uiState.presets.preset1Ml - 50)) },
                     onIncrease = { viewModel.updatePreset(0, minOf(2000, uiState.presets.preset1Ml + 50)) }
                 )
@@ -285,7 +291,7 @@ fun SettingsScreen(
                 PresetItem(
                     label = "プリセット 2",
                     amountMl = uiState.presets.preset2Ml,
-                    iconRes = getIconResForAmount(uiState.presets.preset2Ml),
+                    iconRes = R.drawable.ic_glass,
                     onDecrease = { viewModel.updatePreset(1, maxOf(50, uiState.presets.preset2Ml - 50)) },
                     onIncrease = { viewModel.updatePreset(1, minOf(2000, uiState.presets.preset2Ml + 50)) }
                 )
@@ -293,7 +299,7 @@ fun SettingsScreen(
                 PresetItem(
                     label = "プリセット 3",
                     amountMl = uiState.presets.preset3Ml,
-                    iconRes = getIconResForAmount(uiState.presets.preset3Ml),
+                    iconRes = R.drawable.ic_bottle,
                     onDecrease = { viewModel.updatePreset(2, maxOf(50, uiState.presets.preset3Ml - 50)) },
                     onIncrease = { viewModel.updatePreset(2, minOf(2000, uiState.presets.preset3Ml + 50)) }
                 )
@@ -727,15 +733,6 @@ private fun HealthConnectCard(
                 }
             }
         }
-    }
-}
-
-@DrawableRes
-private fun getIconResForAmount(amountMl: Int): Int {
-    return when {
-        amountMl <= 250 -> R.drawable.ic_coffee
-        amountMl <= 400 -> R.drawable.ic_glass
-        else -> R.drawable.ic_bottle
     }
 }
 

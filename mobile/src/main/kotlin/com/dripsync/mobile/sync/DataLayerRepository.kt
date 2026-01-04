@@ -153,4 +153,31 @@ class DataLayerRepository @Inject constructor(
             userPreferencesRepository.updatePresets(preset1, preset2, preset3)
         }
     }
+
+    /**
+     * 削除をWearに同期
+     */
+    suspend fun syncDeleteRecord(recordId: String) {
+        val putDataReq = PutDataMapRequest.create(
+            "${DataLayerPaths.HYDRATION_DELETE_PATH}/$recordId"
+        ).apply {
+            dataMap.putString(DataLayerPaths.KEY_RECORD_ID, recordId)
+            dataMap.putLong(DataLayerPaths.KEY_SYNC_TIMESTAMP, System.currentTimeMillis())
+        }.asPutDataRequest().setUrgent()
+
+        dataClient.putDataItem(putDataReq).await()
+    }
+
+    /**
+     * Wearからの削除を処理
+     */
+    suspend fun handleDeleteRecordFromWear(eventInfo: DataEventInfo) {
+        if (eventInfo.type != DataEvent.TYPE_CHANGED) return
+        if (!eventInfo.path.startsWith(DataLayerPaths.HYDRATION_DELETE_PATH)) return
+
+        val dataMap = DataMapItem.fromDataItem(eventInfo.dataItem).dataMap
+        val recordId = dataMap.getString(DataLayerPaths.KEY_RECORD_ID) ?: return
+
+        hydrationRepository.deleteRecord(recordId)
+    }
 }

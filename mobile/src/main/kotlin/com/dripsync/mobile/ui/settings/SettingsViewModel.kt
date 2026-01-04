@@ -6,6 +6,7 @@ import com.dripsync.mobile.health.HealthConnectManager
 import com.dripsync.mobile.health.HealthConnectRepository
 import com.dripsync.mobile.health.SyncResult
 import com.dripsync.mobile.reminder.ReminderScheduler
+import com.dripsync.mobile.sync.DataLayerRepository
 import com.dripsync.shared.data.preferences.PresetSettings
 import com.dripsync.shared.data.preferences.ReminderSettings
 import com.dripsync.shared.data.preferences.UserPreferencesRepository
@@ -46,7 +47,8 @@ class SettingsViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository,
     private val healthConnectManager: HealthConnectManager,
     private val healthConnectRepository: HealthConnectRepository,
-    private val reminderScheduler: ReminderScheduler
+    private val reminderScheduler: ReminderScheduler,
+    private val dataLayerRepository: DataLayerRepository
 ) : ViewModel() {
 
     private val _event = MutableSharedFlow<SettingsEvent>()
@@ -74,6 +76,17 @@ class SettingsViewModel @Inject constructor(
 
     init {
         checkHealthConnectStatus()
+        syncWithWear()
+    }
+
+    fun syncWithWear() {
+        viewModelScope.launch {
+            try {
+                dataLayerRepository.syncPreferences()
+            } catch (e: Exception) {
+                // Wear未接続時はエラーを無視
+            }
+        }
     }
 
     fun checkHealthConnectStatus() {
@@ -107,6 +120,11 @@ class SettingsViewModel @Inject constructor(
             try {
                 userPreferencesRepository.updateDailyGoal(goalMl)
                 _event.emit(SettingsEvent.SaveSuccess)
+                try {
+                    dataLayerRepository.syncPreferences()
+                } catch (e: Exception) {
+                    // Wear未接続時はエラーを無視
+                }
             } catch (e: Exception) {
                 _event.emit(SettingsEvent.SaveFailure)
             }
@@ -118,6 +136,11 @@ class SettingsViewModel @Inject constructor(
             try {
                 userPreferencesRepository.updatePreset(index, amountMl)
                 _event.emit(SettingsEvent.SaveSuccess)
+                try {
+                    dataLayerRepository.syncPreferences()
+                } catch (e: Exception) {
+                    // Wear未接続時はエラーを無視
+                }
             } catch (e: Exception) {
                 _event.emit(SettingsEvent.SaveFailure)
             }

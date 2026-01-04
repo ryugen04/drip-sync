@@ -6,6 +6,7 @@ package com.dripsync.shared.sync
 object DataLayerPaths {
     // データアイテムのパス
     const val HYDRATION_RECORD_PATH = "/hydration/record"
+    const val HYDRATION_DELETE_PATH = "/hydration/delete"
     const val HYDRATION_SYNC_PATH = "/hydration/sync"
     const val PREFERENCES_PATH = "/preferences"
 

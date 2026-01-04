@@ -61,6 +61,8 @@ import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.dripsync.mobile.R
+import com.dripsync.shared.data.preferences.PresetSettings
+import com.dripsync.shared.util.IconUtils
 import kotlinx.coroutines.flow.collectLatest
 import java.time.format.DateTimeFormatter
 
@@ -101,6 +103,20 @@ fun DashboardScreen(
                     Toast.makeText(
                         context,
                         context.getString(R.string.record_failed),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                is DashboardEvent.DeleteSuccess -> {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.history_delete_success),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+                is DashboardEvent.DeleteFailure -> {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.history_delete_failed),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
@@ -238,7 +254,6 @@ fun DashboardScreen(
                     PresetButtonWithRing(
                         amountMl = uiState.presets.preset1Ml,
                         dailyGoal = uiState.dailyGoalMl,
-                        label = "コップ",
                         iconRes = R.drawable.ic_coffee,
                         onClick = { viewModel.recordHydration(uiState.presets.preset1Ml) },
                         modifier = Modifier.weight(1f)
@@ -246,7 +261,6 @@ fun DashboardScreen(
                     PresetButtonWithRing(
                         amountMl = uiState.presets.preset2Ml,
                         dailyGoal = uiState.dailyGoalMl,
-                        label = "マグ",
                         iconRes = R.drawable.ic_glass,
                         onClick = { viewModel.recordHydration(uiState.presets.preset2Ml) },
                         modifier = Modifier.weight(1f)
@@ -254,7 +268,6 @@ fun DashboardScreen(
                     PresetButtonWithRing(
                         amountMl = uiState.presets.preset3Ml,
                         dailyGoal = uiState.dailyGoalMl,
-                        label = "水筒",
                         iconRes = R.drawable.ic_bottle,
                         onClick = { viewModel.recordHydration(uiState.presets.preset3Ml) },
                         modifier = Modifier.weight(1f)
@@ -370,7 +383,8 @@ fun DashboardScreen(
                         amountMl = record.amountMl,
                         time = record.recordedAt.atZone(java.time.ZoneId.systemDefault())
                             .format(DateTimeFormatter.ofPattern("HH:mm")),
-                        onDelete = { /* TODO: implement delete */ }
+                        presets = uiState.presets,
+                        onDelete = { viewModel.deleteRecord(record.id) }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                 }
@@ -387,7 +401,6 @@ fun DashboardScreen(
 private fun PresetButtonWithRing(
     amountMl: Int,
     dailyGoal: Int,
-    label: String,
     @DrawableRes iconRes: Int,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
@@ -451,14 +464,6 @@ private fun PresetButtonWithRing(
                 tint = GrayText,
                 modifier = Modifier.size(20.dp)
             )
-
-            Spacer(modifier = Modifier.height(4.dp))
-
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelSmall,
-                color = GrayText
-            )
         }
     }
 }
@@ -467,9 +472,14 @@ private fun PresetButtonWithRing(
 private fun RecordItemCard(
     amountMl: Int,
     time: String,
+    presets: PresetSettings,
     onDelete: () -> Unit
 ) {
-    val iconRes = getIconResForAmount(amountMl)
+    val iconRes = when (IconUtils.getIconTypeForAmount(amountMl, presets)) {
+        IconUtils.IconType.COFFEE -> R.drawable.ic_coffee
+        IconUtils.IconType.GLASS -> R.drawable.ic_glass
+        IconUtils.IconType.BOTTLE -> R.drawable.ic_bottle
+    }
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -526,14 +536,5 @@ private fun RecordItemCard(
                 )
             }
         }
-    }
-}
-
-@DrawableRes
-private fun getIconResForAmount(amountMl: Int): Int {
-    return when {
-        amountMl <= 250 -> R.drawable.ic_coffee
-        amountMl <= 400 -> R.drawable.ic_glass
-        else -> R.drawable.ic_bottle
     }
 }

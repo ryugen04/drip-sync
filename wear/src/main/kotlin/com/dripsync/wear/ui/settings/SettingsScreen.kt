@@ -19,6 +19,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +49,10 @@ fun SettingsScreen(
 ) {
     val presets by viewModel.presets.collectAsState()
 
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.syncWithMobile()
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -74,18 +80,21 @@ fun SettingsScreen(
 
         PresetSettingItem(
             amountMl = presets.preset1Ml,
+            iconRes = R.drawable.ic_coffee,
             onIncrease = { viewModel.updatePreset(0, presets.preset1Ml + 50) },
             onDecrease = { viewModel.updatePreset(0, maxOf(50, presets.preset1Ml - 50)) }
         )
 
         PresetSettingItem(
             amountMl = presets.preset2Ml,
+            iconRes = R.drawable.ic_glass,
             onIncrease = { viewModel.updatePreset(1, presets.preset2Ml + 50) },
             onDecrease = { viewModel.updatePreset(1, maxOf(50, presets.preset2Ml - 50)) }
         )
 
         PresetSettingItem(
             amountMl = presets.preset3Ml,
+            iconRes = R.drawable.ic_bottle,
             onIncrease = { viewModel.updatePreset(2, presets.preset3Ml + 50) },
             onDecrease = { viewModel.updatePreset(2, maxOf(50, presets.preset3Ml - 50)) }
         )
@@ -104,16 +113,10 @@ fun SettingsScreen(
 @Composable
 private fun PresetSettingItem(
     amountMl: Int,
+    iconRes: Int,
     onIncrease: () -> Unit,
     onDecrease: () -> Unit
 ) {
-    // アイコンを量に応じて選択
-    val iconRes = when {
-        amountMl <= 200 -> R.drawable.ic_coffee
-        amountMl <= 500 -> R.drawable.ic_glass
-        else -> R.drawable.ic_bottle
-    }
-
     Row(
         modifier = Modifier
             .fillMaxWidth()

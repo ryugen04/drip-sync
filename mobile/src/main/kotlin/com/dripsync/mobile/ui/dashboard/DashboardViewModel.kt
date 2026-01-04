@@ -67,6 +67,8 @@ data class DashboardUiState(
 sealed class DashboardEvent {
     data class RecordSuccess(val amountMl: Int) : DashboardEvent()
     data object RecordFailure : DashboardEvent()
+    data object DeleteSuccess : DashboardEvent()
+    data object DeleteFailure : DashboardEvent()
 }
 
 @HiltViewModel
@@ -148,6 +150,27 @@ class DashboardViewModel @Inject constructor(
                 }
             } catch (e: Exception) {
                 _event.emit(DashboardEvent.RecordFailure)
+            }
+        }
+    }
+
+    fun deleteRecord(id: String) {
+        viewModelScope.launch {
+            try {
+                hydrationRepository.deleteRecord(id)
+                _event.emit(DashboardEvent.DeleteSuccess)
+                // 週間データを更新
+                loadWeeklyData()
+                // Health Connectに同期
+                healthConnectRepository.syncToHealthConnect()
+                // Wearに削除を同期
+                try {
+                    dataLayerRepository.syncDeleteRecord(id)
+                } catch (e: Exception) {
+                    // Wear未接続時はエラーを無視
+                }
+            } catch (e: Exception) {
+                _event.emit(DashboardEvent.DeleteFailure)
             }
         }
     }

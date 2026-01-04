@@ -3,8 +3,10 @@ package com.dripsync.mobile.ui.stats
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -12,10 +14,12 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocalFireDepartment
 import androidx.compose.material3.Icon
@@ -24,6 +28,10 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -374,6 +382,10 @@ private fun DailyCumulativeChart(
 
     val now = LocalTime.now()
 
+    // maxValueを動的に計算（目標値と実績の最大値の大きい方）
+    val maxActualValue = data.maxOfOrNull { it.actualCumulative } ?: 0
+    val maxDisplayValue = maxOf(goalMl, maxActualValue)
+
     Row(modifier = modifier) {
         // Y軸ラベル
         Column(
@@ -383,12 +395,12 @@ private fun DailyCumulativeChart(
             verticalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = "${goalMl / 1000f}L",
+                text = "${maxDisplayValue / 1000f}L",
                 style = MaterialTheme.typography.labelSmall,
                 color = GrayText
             )
             Text(
-                text = "${goalMl / 2000f}L",
+                text = "${maxDisplayValue / 2000f}L",
                 style = MaterialTheme.typography.labelSmall,
                 color = GrayText
             )
@@ -412,7 +424,7 @@ private fun DailyCumulativeChart(
             ) {
                 val chartHeight = size.height
                 val chartWidth = size.width
-                val maxValue = goalMl.toFloat()
+                val maxValue = maxDisplayValue.toFloat()
 
                 // 現在時刻までのインデックスを計算
                 val currentPointIndex = data.indexOfLast { !it.time.isAfter(now) }
@@ -551,55 +563,119 @@ private fun WeeklyBarChart(
     }
 
     val maxAmount = displayData.maxOfOrNull { maxOf(it.amountMl, it.goalMl) }?.coerceAtLeast(1) ?: 1500
+    val goalMl = displayData.firstOrNull()?.goalMl ?: 1500
+    val goalLineRatio = (goalMl.toFloat() / maxAmount).coerceIn(0f, 1f)
 
-    Row(
-        modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.Bottom
-    ) {
-        displayData.forEach { dayStats ->
-            val isToday = dayStats.date == LocalDate.now()
-            val barHeightRatio = (dayStats.amountMl.toFloat() / maxAmount).coerceIn(0.02f, 1f)
+    // 選択されたバーのインデックス（-1は選択なし）
+    var selectedBarIndex by remember { mutableIntStateOf(-1) }
 
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Bottom
+    BoxWithConstraints(modifier = modifier) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // グラフエリア（バー + 目標線）
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
             ) {
-                // バー
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                    contentAlignment = Alignment.BottomCenter
+                // 目標値の点線
+                Canvas(
+                    modifier = Modifier.fillMaxSize()
                 ) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth(0.7f)
-                            .fillMaxSize(barHeightRatio)
-                            .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
-                            .background(
-                                if (dayStats.isCompleted) {
-                                    Brush.verticalGradient(listOf(CyanBright, PurpleBright))
-                                } else if (dayStats.amountMl > 0) {
-                                    Brush.verticalGradient(listOf(CardBackground, CardBackground))
-                                } else {
-                                    Brush.verticalGradient(listOf(CardBackground.copy(alpha = 0.5f), CardBackground.copy(alpha = 0.5f)))
-                                }
-                            )
+                    val lineY = size.height * (1f - goalLineRatio)
+                    drawLine(
+                        color = CyanBright.copy(alpha = 0.6f),
+                        start = Offset(0f, lineY),
+                        end = Offset(size.width, lineY),
+                        strokeWidth = 2.dp.toPx(),
+                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 10f))
                     )
                 }
 
-                Spacer(modifier = Modifier.height(8.dp))
+                // バーを描画
+                Row(
+                    modifier = Modifier.fillMaxSize(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.Bottom
+                ) {
+                    displayData.forEachIndexed { index, dayStats ->
+                        val barHeightRatio = (dayStats.amountMl.toFloat() / maxAmount).coerceIn(0.02f, 1f)
 
-                // 日付
-                Text(
-                    text = dayStats.dateLabel,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = if (isToday) CyanBright else GrayText,
-                    fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
-                    fontSize = 10.sp
-                )
+                        Box(
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                                .pointerInput(Unit) {
+                                    detectTapGestures(
+                                        onTap = {
+                                            selectedBarIndex = if (selectedBarIndex == index) -1 else index
+                                        }
+                                    )
+                                },
+                            contentAlignment = Alignment.BottomCenter
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth(0.7f)
+                                    .fillMaxHeight(barHeightRatio)
+                                    .clip(RoundedCornerShape(topStart = 8.dp, topEnd = 8.dp))
+                                    .background(
+                                        if (dayStats.isCompleted) {
+                                            Brush.verticalGradient(listOf(CyanBright, PurpleBright))
+                                        } else if (dayStats.amountMl > 0) {
+                                            Brush.verticalGradient(listOf(CardBackground, CardBackground))
+                                        } else {
+                                            Brush.verticalGradient(
+                                                listOf(
+                                                    CardBackground.copy(alpha = 0.5f),
+                                                    CardBackground.copy(alpha = 0.5f)
+                                                )
+                                            )
+                                        }
+                                    )
+                            )
+
+                            // 選択時のツールチップ
+                            if (selectedBarIndex == index) {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopCenter)
+                                        .offset(y = (-8).dp)
+                                        .clip(RoundedCornerShape(4.dp))
+                                        .background(Color.White)
+                                        .padding(horizontal = 6.dp, vertical = 2.dp)
+                                ) {
+                                    Text(
+                                        text = "${dayStats.amountMl}ml",
+                                        style = MaterialTheme.typography.labelSmall,
+                                        color = Color.Black,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 10.sp
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // 日付ラベル
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                displayData.forEachIndexed { index, dayStats ->
+                    val isToday = dayStats.date == LocalDate.now()
+                    Text(
+                        text = dayStats.dateLabel,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = if (isToday) CyanBright else GrayText,
+                        fontWeight = if (isToday) FontWeight.Bold else FontWeight.Normal,
+                        fontSize = 10.sp,
+                        modifier = Modifier.weight(1f).wrapContentSize(Alignment.Center)
+                    )
+                }
             }
         }
     }

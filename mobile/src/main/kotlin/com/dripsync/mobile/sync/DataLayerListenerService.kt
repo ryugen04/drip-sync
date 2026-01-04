@@ -51,6 +51,9 @@ class DataLayerListenerService : WearableListenerService() {
 
             serviceScope.launch {
                 when {
+                    eventInfo.path.startsWith(DataLayerPaths.HYDRATION_DELETE_PATH) -> {
+                        dataLayerRepository.handleDeleteRecordFromWear(eventInfo)
+                    }
                     eventInfo.path.startsWith(DataLayerPaths.HYDRATION_RECORD_PATH) -> {
                         dataLayerRepository.handleHydrationRecordFromWear(eventInfo)
                     }
