@@ -1,5 +1,6 @@
 package com.dripsync.wear.ui.settings
 
+import com.dripsync.wear.BuildConfig
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -87,6 +88,15 @@ fun SettingsScreen(
             amountMl = presets.preset3Ml,
             onIncrease = { viewModel.updatePreset(2, presets.preset3Ml + 50) },
             onDecrease = { viewModel.updatePreset(2, maxOf(50, presets.preset3Ml - 50)) }
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // バージョン表示
+        Text(
+            text = "v${BuildConfig.VERSION_NAME}",
+            color = TextGray,
+            fontSize = 9.sp
         )
     }
 }
