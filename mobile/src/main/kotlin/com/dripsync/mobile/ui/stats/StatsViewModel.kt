@@ -131,7 +131,7 @@ class StatsViewModel @Inject constructor(
         )
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000),
+        started = SharingStarted.WhileSubscribed(0),
         initialValue = StatsUiState()
     )
 
