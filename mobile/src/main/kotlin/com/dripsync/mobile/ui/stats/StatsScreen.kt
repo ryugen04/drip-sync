@@ -27,7 +27,9 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -201,13 +203,15 @@ private fun DailyContent(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        DailyCumulativeChart(
-            data = uiState.hourlyData,
-            goalMl = uiState.dailyGoalMl,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        )
+        key(uiState.hourlyData.hashCode(), uiState.dailyGoalMl) {
+            DailyCumulativeChart(
+                data = uiState.hourlyData,
+                goalMl = uiState.dailyGoalMl,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
+        }
 
         // 凡例
         Row(
@@ -358,12 +362,14 @@ private fun WeeklyContent(
         Spacer(modifier = Modifier.height(32.dp))
 
         // 週間グラフ
-        WeeklyBarChart(
-            data = uiState.weeklyData,
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-        )
+        key(uiState.weeklyData.hashCode()) {
+            WeeklyBarChart(
+                data = uiState.weeklyData,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f)
+            )
+        }
     }
 }
 
