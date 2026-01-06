@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -108,9 +109,8 @@ class UserPreferencesRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getPreferences(): UserPreferences {
-        var result = UserPreferences()
-        context.dataStore.data.collect { prefs ->
-            result = UserPreferences(
+        return context.dataStore.data.map { prefs ->
+            UserPreferences(
                 dailyGoalMl = prefs[Keys.DAILY_GOAL] ?: 1500,
                 presets = PresetSettings(
                     preset1Ml = prefs[Keys.PRESET_1] ?: 200,
@@ -118,45 +118,34 @@ class UserPreferencesRepositoryImpl @Inject constructor(
                     preset3Ml = prefs[Keys.PRESET_3] ?: 500
                 )
             )
-            return@collect
-        }
-        return result
+        }.first()
     }
 
     override suspend fun getPresets(): PresetSettings {
-        var result = PresetSettings()
-        context.dataStore.data.collect { prefs ->
-            result = PresetSettings(
+        return context.dataStore.data.map { prefs ->
+            PresetSettings(
                 preset1Ml = prefs[Keys.PRESET_1] ?: 200,
                 preset2Ml = prefs[Keys.PRESET_2] ?: 350,
                 preset3Ml = prefs[Keys.PRESET_3] ?: 500
             )
-            return@collect
-        }
-        return result
+        }.first()
     }
 
     override suspend fun getDailyGoal(): Int {
-        var result = 1500
-        context.dataStore.data.collect { prefs ->
-            result = prefs[Keys.DAILY_GOAL] ?: 1500
-            return@collect
-        }
-        return result
+        return context.dataStore.data.map { prefs ->
+            prefs[Keys.DAILY_GOAL] ?: 1500
+        }.first()
     }
 
     override suspend fun getReminderSettings(): ReminderSettings {
-        var result = ReminderSettings()
-        context.dataStore.data.collect { prefs ->
-            result = ReminderSettings(
+        return context.dataStore.data.map { prefs ->
+            ReminderSettings(
                 isEnabled = prefs[Keys.REMINDER_ENABLED] ?: false,
                 startHour = prefs[Keys.REMINDER_START_HOUR] ?: 8,
                 endHour = prefs[Keys.REMINDER_END_HOUR] ?: 21,
                 intervalHours = prefs[Keys.REMINDER_INTERVAL_HOURS] ?: 2
             )
-            return@collect
-        }
-        return result
+        }.first()
     }
 
     override suspend fun updatePresets(preset1Ml: Int, preset2Ml: Int, preset3Ml: Int) {
