@@ -7,11 +7,11 @@ import com.dripsync.shared.data.repository.HydrationRepository
 import com.dripsync.shared.domain.model.HourlyHydrationPoint
 import com.dripsync.shared.domain.model.IdealHydrationSchedule
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
@@ -38,31 +38,31 @@ class StatsViewModel @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(StatsUiState())
-    val uiState: StateFlow<StatsUiState> = _uiState.asStateFlow()
+    private val today = LocalDate.now()
 
-    init {
-        refreshStats()
-    }
+    private val todayRecordsFlow = hydrationRepository.observeRecordsByDateRange(today, today)
+        .onStart { emit(emptyList()) }
+    private val dailyGoalFlow = userPreferencesRepository.observeDailyGoal()
+        .onStart { emit(1500) }
 
-    fun refreshStats() {
-        viewModelScope.launch {
-            val dailyGoal = userPreferencesRepository.observeDailyGoal().first()
-            val today = LocalDate.now()
-            val records = hydrationRepository.getRecordsByDateRange(today, today)
-            val todayTotal = records.sumOf { it.amountMl }
+    val uiState: StateFlow<StatsUiState> = combine(
+        todayRecordsFlow,
+        dailyGoalFlow
+    ) { records, dailyGoal ->
+        val todayTotal = records.sumOf { it.amountMl }
+        val hourlyData = calculateHourlyData(records, dailyGoal)
 
-            // 時間帯ごとの累積データを計算
-            val hourlyData = calculateHourlyData(records, dailyGoal)
-
-            _uiState.value = StatsUiState(
-                hourlyData = hourlyData,
-                dailyGoalMl = dailyGoal,
-                todayTotalMl = todayTotal,
-                isLoading = false
-            )
-        }
-    }
+        StatsUiState(
+            hourlyData = hourlyData,
+            dailyGoalMl = dailyGoal,
+            todayTotalMl = todayTotal,
+            isLoading = false
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(0),
+        initialValue = StatsUiState()
+    )
 
     private fun calculateHourlyData(
         records: List<com.dripsync.shared.domain.model.Hydration>,
