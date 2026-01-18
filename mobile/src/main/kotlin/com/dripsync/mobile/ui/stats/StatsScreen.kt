@@ -203,7 +203,11 @@ private fun DailyContent(
             modifier = Modifier.padding(bottom = 16.dp)
         )
 
-        key(uiState.hourlyData.hashCode(), uiState.dailyGoalMl) {
+        key(
+            uiState.hourlyData.size,
+            uiState.hourlyData.lastOrNull()?.actualCumulative ?: 0,
+            uiState.dailyGoalMl
+        ) {
             DailyCumulativeChart(
                 data = uiState.hourlyData,
                 goalMl = uiState.dailyGoalMl,
@@ -386,7 +390,8 @@ private fun DailyCumulativeChart(
         return
     }
 
-    val now = LocalTime.now()
+    // データが変更されたときに現在時刻を再取得
+    val now = remember(data) { LocalTime.now() }
 
     // maxValueを動的に計算（目標値と実績の最大値の大きい方）
     val maxActualValue = data.maxOfOrNull { it.actualCumulative } ?: 0

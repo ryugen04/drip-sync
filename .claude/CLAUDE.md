@@ -142,8 +142,8 @@ mobile と wear は別々のモジュールだが、**versionCode はプロジ�
 
 | モジュール | ファイル | 現在の値 |
 |-----------|---------|---------|
-| mobile | `mobile/build.gradle.kts` | versionCode: 21, versionName: "1.0.8" |
-| wear | `wear/build.gradle.kts` | versionCode: 22, versionName: "1.0.8" |
+| mobile | `mobile/build.gradle.kts` | versionCode: 28, versionName: "1.0.12" |
+| wear | `wear/build.gradle.kts` | versionCode: 29, versionName: "1.0.12" |
 
 **重要なルール:**
 
