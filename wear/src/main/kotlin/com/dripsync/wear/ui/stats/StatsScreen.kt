@@ -13,8 +13,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -31,7 +33,6 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.wear.compose.material.Text
 import com.dripsync.shared.domain.model.HourlyHydrationPoint
 import java.time.LocalTime
-import java.time.format.DateTimeFormatter
 
 // カラーパレット（HomeScreenと共通）
 private val CyanBright = Color(0xFF00E5FF)
@@ -44,7 +45,7 @@ private val IdealLineColor = Color(0xFF4A5568)
 fun StatsScreen(
     viewModel: StatsViewModel = hiltViewModel()
 ) {
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
 
     Column(
         modifier = Modifier
@@ -83,13 +84,19 @@ fun StatsScreen(
         Spacer(modifier = Modifier.height(8.dp))
 
         // 累積グラフ
-        DailyCumulativeChart(
-            data = uiState.hourlyData,
-            goalMl = uiState.dailyGoalMl,
-            modifier = Modifier
-                .weight(1f)
-                .padding(horizontal = 12.dp)
-        )
+        key(
+            uiState.hourlyData.size,
+            uiState.hourlyData.lastOrNull()?.actualCumulative ?: 0,
+            uiState.dailyGoalMl
+        ) {
+            DailyCumulativeChart(
+                data = uiState.hourlyData,
+                goalMl = uiState.dailyGoalMl,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(horizontal = 12.dp)
+            )
+        }
 
         Spacer(modifier = Modifier.height(14.dp))
     }
@@ -108,8 +115,8 @@ private fun DailyCumulativeChart(
         return
     }
 
-    val timeFormatter = DateTimeFormatter.ofPattern("H")
-    val now = LocalTime.now()
+    // データが変更されたときに現在時刻を再取得
+    val now = remember(data) { LocalTime.now() }
 
     Row(modifier = modifier) {
         // Y軸ラベル
