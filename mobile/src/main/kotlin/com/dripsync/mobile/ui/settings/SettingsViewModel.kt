@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.dripsync.mobile.health.HealthConnectManager
 import com.dripsync.mobile.health.HealthConnectRepository
 import com.dripsync.mobile.health.SyncResult
+import com.dripsync.mobile.reminder.ReminderNotificationHelper
 import com.dripsync.mobile.reminder.ReminderScheduler
 import com.dripsync.mobile.sync.DataLayerRepository
 import com.dripsync.shared.data.preferences.PresetSettings
@@ -33,6 +34,7 @@ data class SettingsUiState(
     val presets: PresetSettings = PresetSettings(),
     val reminderSettings: ReminderSettings = ReminderSettings(),
     val healthConnectStatus: HealthConnectStatus = HealthConnectStatus.NOT_INSTALLED,
+    val hasNotificationPermission: Boolean = true,
     val isLoading: Boolean = true
 )
 
@@ -48,6 +50,7 @@ class SettingsViewModel @Inject constructor(
     private val healthConnectManager: HealthConnectManager,
     private val healthConnectRepository: HealthConnectRepository,
     private val reminderScheduler: ReminderScheduler,
+    private val reminderNotificationHelper: ReminderNotificationHelper,
     private val dataLayerRepository: DataLayerRepository
 ) : ViewModel() {
 
@@ -55,17 +58,20 @@ class SettingsViewModel @Inject constructor(
     val event: SharedFlow<SettingsEvent> = _event.asSharedFlow()
 
     private val _healthConnectStatus = MutableStateFlow(HealthConnectStatus.NOT_INSTALLED)
+    private val _hasNotificationPermission = MutableStateFlow(true)
 
     val uiState: StateFlow<SettingsUiState> = combine(
         userPreferencesRepository.observePreferences(),
         userPreferencesRepository.observeReminderSettings(),
-        _healthConnectStatus
-    ) { prefs, reminderSettings, healthStatus ->
+        _healthConnectStatus,
+        _hasNotificationPermission
+    ) { prefs, reminderSettings, healthStatus, hasNotificationPermission ->
         SettingsUiState(
             dailyGoalMl = prefs.dailyGoalMl,
             presets = prefs.presets,
             reminderSettings = reminderSettings,
             healthConnectStatus = healthStatus,
+            hasNotificationPermission = hasNotificationPermission,
             isLoading = false
         )
     }.stateIn(
@@ -76,6 +82,7 @@ class SettingsViewModel @Inject constructor(
 
     init {
         checkHealthConnectStatus()
+        checkNotificationPermission()
         syncWithWear()
     }
 
@@ -97,6 +104,10 @@ class SettingsViewModel @Inject constructor(
                 else -> HealthConnectStatus.CONNECTED
             }
         }
+    }
+
+    fun checkNotificationPermission() {
+        _hasNotificationPermission.value = reminderNotificationHelper.hasNotificationPermission()
     }
 
     fun onPermissionResult(granted: Boolean) {

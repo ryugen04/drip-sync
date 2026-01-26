@@ -1,5 +1,7 @@
 package com.dripsync.mobile.ui.settings
 
+import android.content.Intent
+import android.provider.Settings
 import android.widget.Toast
 import com.dripsync.mobile.BuildConfig
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -124,6 +126,7 @@ fun SettingsScreen(
 
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         viewModel.syncWithWear()
+        viewModel.checkNotificationPermission()
     }
 
     if (showGoalInfoDialog) {
@@ -263,10 +266,17 @@ fun SettingsScreen(
 
             ReminderSettingsCard(
                 settings = uiState.reminderSettings,
+                hasNotificationPermission = uiState.hasNotificationPermission,
                 onToggle = { viewModel.toggleReminder() },
                 onStartHourChange = { viewModel.updateReminderStartHour(it) },
                 onEndHourChange = { viewModel.updateReminderEndHour(it) },
-                onIntervalChange = { viewModel.updateReminderInterval(it) }
+                onIntervalChange = { viewModel.updateReminderInterval(it) },
+                onOpenNotificationSettings = {
+                    val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                        putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                    }
+                    context.startActivity(intent)
+                }
             )
 
             Spacer(modifier = Modifier.height(32.dp))
@@ -425,10 +435,12 @@ private fun GoalInfoDialog(onDismiss: () -> Unit) {
 @Composable
 private fun ReminderSettingsCard(
     settings: ReminderSettings,
+    hasNotificationPermission: Boolean,
     onToggle: () -> Unit,
     onStartHourChange: (Int) -> Unit,
     onEndHourChange: (Int) -> Unit,
-    onIntervalChange: (Int) -> Unit
+    onIntervalChange: (Int) -> Unit,
+    onOpenNotificationSettings: () -> Unit
 ) {
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -459,6 +471,45 @@ private fun ReminderSettingsCard(
                         uncheckedTrackColor = ButtonBackground
                     )
                 )
+            }
+
+            // 通知権限がない場合の警告
+            if (settings.isEnabled && !hasNotificationPermission) {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFFFF9800).copy(alpha = 0.15f))
+                        .padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.Warning,
+                        contentDescription = null,
+                        tint = Color(0xFFFF9800),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = "通知権限がありません",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color(0xFFFF9800),
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            text = "リマインダーを受け取るには通知を許可してください",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = GrayText
+                        )
+                    }
+                    TextButton(
+                        onClick = onOpenNotificationSettings
+                    ) {
+                        Text("設定", color = CyanBright)
+                    }
+                }
             }
 
             if (settings.isEnabled) {
