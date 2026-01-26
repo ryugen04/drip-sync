@@ -12,6 +12,9 @@
     <!-- 通知権限（Android 13以降） -->
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
+    <!-- 再起動後のリマインダー復旧用 -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application
         android:name=".DripSyncApplication"
         android:allowBackup="true"
@@ -84,6 +87,15 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
+
+        <!-- 再起動後にリマインダーを復旧するReceiver -->
+        <receiver
+            android:name=".reminder.BootCompletedReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
     </application>
 
     <!-- Health Connect が利用可能なデバイスのみをターゲット -->

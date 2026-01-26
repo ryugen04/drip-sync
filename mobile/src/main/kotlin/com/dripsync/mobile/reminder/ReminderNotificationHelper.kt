@@ -8,6 +8,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
@@ -22,6 +23,7 @@ class ReminderNotificationHelper @Inject constructor(
     @ApplicationContext private val context: Context
 ) {
     companion object {
+        private const val TAG = "ReminderNotification"
         const val CHANNEL_ID = "hydration_reminder"
         const val CHANNEL_NAME = "水分補給リマインダー"
         const val CHANNEL_DESCRIPTION = "目標未達成時に水分補給を促すリマインダー通知"
@@ -44,6 +46,7 @@ class ReminderNotificationHelper @Inject constructor(
 
     fun showReminderNotification(currentMl: Int, goalMl: Int) {
         if (!hasNotificationPermission()) {
+            Log.w(TAG, "通知権限がないためリマインダーを表示できません")
             return
         }
 
@@ -78,7 +81,7 @@ class ReminderNotificationHelper @Inject constructor(
         NotificationManagerCompat.from(context).cancel(NOTIFICATION_ID)
     }
 
-    private fun hasNotificationPermission(): Boolean {
+    fun hasNotificationPermission(): Boolean {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             ActivityCompat.checkSelfPermission(
                 context,
